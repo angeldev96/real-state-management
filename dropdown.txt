@@ -1,0 +1,57 @@
+(Property Features)
+*****DROPDOWN*****
+S.Detached
+Detached
+Parking
+Garage
+Brick
+R6
+Income
+Duplex
+Big Porch
+Delivered Vacant
+Exlusive Roof
+Air Rights
+Lot of Potential
+Multifamily
+1st&basement
+1st floor
+3-flr+basement
+2nd floor
+3rd floor
+4th floor
+Hi Floor
+Elevator
+Backyard
+
+Property_Type
+*****DROPDOWN*****
+1 family
+2 family
+3 family
+4+ family
+condo
+co-op
+Lot
+
+Zoning
+***Dropdown****
+R6
+R5
+
+*****Condition*****
+Needs Work / Renovation
+Good / Nice Condition
+Great / Excellent Condition
+Move-In Condition
+Beautiful
+Luxury / State of the Art
+New / Pre-Construction / Renovated
+Tenant / Income Status
+Shul / Special Use
+
+
+
+
+
+
