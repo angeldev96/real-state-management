@@ -22,13 +22,16 @@ The system sends listings in three curated waves per month:
 - **Week 3** → default day `25` (safer than 30 for February)
 
 Key rules:
-1) No “blast all”. Properties are rotated across weeks.
+1) No "blast all". Properties are rotated across weeks.
 2) Manual curation: Eretz picks the cycle for each property to keep a balanced mix.
-3) `is_active` ≠ “which week”. `is_active` controls the “NEW LISTING” badge; `cycle_group` controls when it’s emailed.
-4) Dates are configurable in **Settings** (`cycle_schedules`).
+3) **Two separate status fields**:
+   - `on_market` (boolean): `TRUE` = New property (displays "NEW LISTING" badge in emails), `FALSE` = Not new but still for sale (no badge)
+   - `is_active` (boolean): `TRUE` = Active in system, `FALSE` = Archived (removed from active listings)
+4) `cycle_group` (1|2|3) controls **when** the email is sent, independent of status fields.
+5) Dates are configurable in **Settings** (`cycle_schedules`).
 
 Workflow:
-1) Eretz creates/edits a listing, picks `cycle_group` (1/2/3), and toggles `is_active`.
+1) Eretz creates/edits a listing, picks `cycle_group` (1/2/3), sets `on_market` (new or not), and `is_active` (active or archived).
 2) Scheduler (future backend) sends the listings for that group on the configured day.
 
 ---
@@ -46,14 +49,17 @@ Core tables:
 - `listings`
   - `id`, `address`, `location_description`, `dimensions`
   - `rooms` (nullable), `square_footage` (nullable), `price` (nullable)
-  - `is_active` (bool), `cycle_group` (1|2|3)
+  - `on_market` (bool): `TRUE` = New property (shows "NEW" badge), `FALSE` = Not new but still for sale
+  - `is_active` (bool): `TRUE` = Active in system, `FALSE` = Archived
+  - `cycle_group` (1|2|3): Controls which weekly cycle sends this listing
   - FKs: `property_type_id`, `condition_id`, `zoning_id`
   - Timestamps
 - `listing_features` (pivot many-to-many)
 - `cycle_schedules` (week_number PK, day_of_month, description)
 
-Index in `database.sql`:
+Indexes in `database.sql`:
 - `idx_listings_cycle_active` on (`cycle_group`, `is_active`) to speed up scheduler queries.
+- `idx_listings_on_market` on (`on_market`) WHERE `on_market = TRUE` to filter new listings efficiently.
 
 ---
 

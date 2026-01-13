@@ -40,7 +40,8 @@ export interface Listing {
   rooms: number | null;
   squareFootage: number | null;
   price: number | null;
-  isActive: boolean;
+  onMarket: boolean; // TRUE = Nueva propiedad (badge "NEW"), FALSE = No nueva pero aún en venta
+  isActive: boolean; // TRUE = Active, FALSE = Archived
   cycleGroup: 1 | 2 | 3;
   propertyTypeId: number | null;
   conditionId: number | null;
@@ -72,7 +73,8 @@ export interface ListingFormData {
   rooms: string;
   squareFootage: string;
   price: string;
-  isActive: boolean;
+  onMarket: boolean; // TRUE = Nueva propiedad (badge "NEW")
+  isActive: boolean; // TRUE = Active, FALSE = Archived
   cycleGroup: 1 | 2 | 3;
   propertyTypeId: string;
   conditionId: string;

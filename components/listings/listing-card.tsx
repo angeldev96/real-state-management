@@ -18,11 +18,11 @@ export function ListingCard({ listing, onEdit }: ListingCardProps) {
     <Card
       className={cn(
         "group relative overflow-hidden transition-all duration-300 hover:shadow-lg",
-        !listing.isActive && "opacity-75"
+        !listing.isActive && "opacity-60"
       )}
     >
-      {/* Status Badge */}
-      {listing.isActive && (
+      {/* NEW Badge - Only show when onMarket is true */}
+      {listing.onMarket && (
         <div className="absolute top-3 right-3 z-10">
           <Badge className="bg-destructive text-destructive-foreground font-semibold shadow-md animate-pulse">
             NEW LISTING

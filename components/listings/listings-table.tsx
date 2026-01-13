@@ -130,6 +130,7 @@ export function ListingsTable({
             <TableHead>
               <SortButton field="cycleGroup">Cycle</SortButton>
             </TableHead>
+            <TableHead>On Market</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[70px]"></TableHead>
           </TableRow>
@@ -137,7 +138,7 @@ export function ListingsTable({
         <TableBody>
           {sortedListings.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center">
+              <TableCell colSpan={9} className="h-24 text-center">
                 <p className="text-muted-foreground">No listings found</p>
               </TableCell>
             </TableRow>
@@ -147,7 +148,7 @@ export function ListingsTable({
                 key={listing.id}
                 className={cn(
                   "group transition-colors",
-                  !listing.isActive && "opacity-60"
+                  !listing.isActive && "opacity-50"
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
@@ -193,13 +194,21 @@ export function ListingsTable({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {listing.isActive ? (
-                    <Badge className="bg-destructive text-destructive-foreground">
+                  {listing.onMarket ? (
+                    <Badge className="bg-destructive text-destructive-foreground text-xs font-semibold">
                       NEW
                     </Badge>
                   ) : (
-                    <Badge variant="secondary">Archived</Badge>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={listing.isActive ? "default" : "secondary"}
+                    className="text-xs font-medium"
+                  >
+                    {listing.isActive ? "Active" : "Archived"}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>

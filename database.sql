@@ -51,7 +51,8 @@ CREATE TABLE listings (
     price NUMERIC(12, 2),      -- Nullable por si dice "Unknown".
     
     -- Lógica de Negocio Crítica
-    is_active BOOLEAN DEFAULT TRUE, -- El flag para "Nuevo/Rojo" en el email.
+    on_market BOOLEAN DEFAULT TRUE, -- TRUE = Nueva propiedad (muestra badge "NEW"), FALSE = No es nueva pero aún en venta (sin badge)
+    is_active BOOLEAN DEFAULT TRUE, -- TRUE = Active (en el sistema), FALSE = Archived (fuera del sistema)
     cycle_group INTEGER NOT NULL DEFAULT 1 CHECK (cycle_group IN (1, 2, 3, 4)), -- El "Week 1, 2, 3"
     
     -- Relaciones (Foreign Keys)
@@ -65,6 +66,7 @@ CREATE TABLE listings (
 
 -- Índices para optimizar la Query del Cron Job (Scheduler)
 CREATE INDEX idx_listings_cycle_active ON listings(cycle_group, is_active);
+CREATE INDEX idx_listings_on_market ON listings(on_market) WHERE on_market = TRUE; -- Para filtrar solo nuevas propiedades
 
 -- 4. TABLA PIVOTE PARA FEATURES (MUCHOS A MUCHOS)
 -- Una propiedad puede tener 'Garage' Y 'Backyard' al mismo tiempo.

@@ -55,7 +55,7 @@ export function CycleStatsCard({
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-muted-foreground">Active Listings:</span>
+            <span className="text-muted-foreground">New Listings:</span>
             <span className="font-semibold text-foreground">
               {activeListings}
             </span>
@@ -71,7 +71,7 @@ export function CycleStatsCard({
         {/* Progress indicator */}
         <div className="mt-4 pt-4 border-t border-border">
           <div className="flex items-center justify-between text-xs mb-2">
-            <span className="text-muted-foreground">Active Rate</span>
+            <span className="text-muted-foreground">New Rate</span>
             <span className="font-medium">
               {totalListings > 0
                 ? Math.round((activeListings / totalListings) * 100)

@@ -87,6 +87,7 @@ export const listings: Listing[] = [
     rooms: 5,
     squareFootage: 2600,
     price: 2700000,
+    onMarket: true, // New-True
     isActive: true,
     cycleGroup: 1,
     propertyTypeId: 1,
@@ -104,6 +105,7 @@ export const listings: Listing[] = [
     rooms: 5,
     squareFootage: 2100,
     price: 1850000,
+    onMarket: false, // old-false
     isActive: false,
     cycleGroup: 1,
     propertyTypeId: 1,
@@ -121,6 +123,7 @@ export const listings: Listing[] = [
     rooms: 5,
     squareFootage: 2256,
     price: 1650000,
+    onMarket: false, // old-false
     isActive: false,
     cycleGroup: 1,
     propertyTypeId: 1,
@@ -138,6 +141,7 @@ export const listings: Listing[] = [
     rooms: 5,
     squareFootage: 3800,
     price: 4600000,
+    onMarket: false, // old-false
     isActive: true,
     cycleGroup: 1,
     propertyTypeId: 1,
@@ -155,6 +159,7 @@ export const listings: Listing[] = [
     rooms: 6,
     squareFootage: 3200,
     price: 2300000,
+    onMarket: true, // New-True
     isActive: true,
     cycleGroup: 1,
     propertyTypeId: 2,
@@ -172,6 +177,7 @@ export const listings: Listing[] = [
     rooms: 4,
     squareFootage: 2200,
     price: 2300000,
+    onMarket: true, // New-True
     isActive: true,
     cycleGroup: 2,
     propertyTypeId: 1,
@@ -189,6 +195,7 @@ export const listings: Listing[] = [
     rooms: 4,
     squareFootage: 2800,
     price: 2500000,
+    onMarket: true, // New-True
     isActive: false,
     cycleGroup: 2,
     propertyTypeId: 1,
@@ -206,6 +213,7 @@ export const listings: Listing[] = [
     rooms: 3,
     squareFootage: 1500,
     price: 1700000,
+    onMarket: true, // New-True
     isActive: true,
     cycleGroup: 2,
     propertyTypeId: 5,
@@ -223,6 +231,7 @@ export const listings: Listing[] = [
     rooms: null,
     squareFootage: 2500,
     price: 1750000,
+    onMarket: false, // old-false
     isActive: false,
     cycleGroup: 2,
     propertyTypeId: 3,
@@ -240,6 +249,7 @@ export const listings: Listing[] = [
     rooms: null, // Was "shul" in CSV
     squareFootage: 2800,
     price: 2200000,
+    onMarket: true, // New-True
     isActive: true,
     cycleGroup: 2,
     propertyTypeId: null,
@@ -257,6 +267,7 @@ export const listings: Listing[] = [
     rooms: 5,
     squareFootage: 2400,
     price: 2500000,
+    onMarket: false, // empty in CSV
     isActive: false,
     cycleGroup: 2,
     propertyTypeId: 1,
@@ -274,6 +285,7 @@ export const listings: Listing[] = [
     rooms: 6,
     squareFootage: 5280,
     price: 4900000,
+    onMarket: false, // empty in CSV
     isActive: true,
     cycleGroup: 2,
     propertyTypeId: 2,
@@ -291,6 +303,7 @@ export const listings: Listing[] = [
     rooms: null,
     squareFootage: null,
     price: 2500000,
+    onMarket: false, // empty in CSV
     isActive: false,
     cycleGroup: 3,
     propertyTypeId: 7,
@@ -308,6 +321,7 @@ export const listings: Listing[] = [
     rooms: null,
     squareFootage: null,
     price: 2800000,
+    onMarket: false, // empty in CSV
     isActive: false,
     cycleGroup: 3,
     propertyTypeId: 7,
@@ -325,6 +339,7 @@ export const listings: Listing[] = [
     rooms: null,
     squareFootage: null,
     price: 2300000,
+    onMarket: false, // empty in CSV
     isActive: true,
     cycleGroup: 3,
     propertyTypeId: 1,
@@ -342,6 +357,7 @@ export const listings: Listing[] = [
     rooms: 3,
     squareFootage: 2376,
     price: 2000000,
+    onMarket: false, // empty in CSV
     isActive: false,
     cycleGroup: 3,
     propertyTypeId: 1,
@@ -359,6 +375,7 @@ export const listings: Listing[] = [
     rooms: 6,
     squareFootage: 4000,
     price: 3900000,
+    onMarket: false, // empty in CSV
     isActive: true,
     cycleGroup: 3,
     propertyTypeId: 2,
@@ -376,6 +393,7 @@ export const listings: Listing[] = [
     rooms: 4,
     squareFootage: 2500,
     price: 2100000,
+    onMarket: false, // empty in CSV
     isActive: false,
     cycleGroup: 3,
     propertyTypeId: 1,

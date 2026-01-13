@@ -33,7 +33,7 @@ export default function CycleManagerPage() {
       return {
         weekNumber: week,
         totalListings: cycleListings.length,
-        activeListings: cycleListings.filter((l) => l.isActive).length,
+        activeListings: cycleListings.filter((l) => l.onMarket).length, // Count NEW listings
         nextSendDate: getNextSendDate(week),
       };
     });
@@ -52,9 +52,10 @@ export default function CycleManagerPage() {
   // Global summary stats
   const summaryStats = useMemo(() => {
     const total = allListings.length;
+    const newListings = allListings.filter((l) => l.onMarket).length; // Count NEW listings
     const active = allListings.filter((l) => l.isActive).length;
     const nextDate = getNextSendDate(nextCycle);
-    return { total, active, nextCycle, nextDate };
+    return { total, newListings, active, nextCycle, nextDate };
   }, [allListings, nextCycle]);
 
   const handleEdit = (listing: ListingWithRelations) => {
@@ -116,9 +117,9 @@ export default function CycleManagerPage() {
                 <Mail className="w-6 h-6 text-destructive" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active (NEW)</p>
+                <p className="text-sm text-muted-foreground">New Listings</p>
                 <p className="text-3xl font-serif font-semibold">
-                  {summaryStats.active}
+                  {summaryStats.newListings}
                 </p>
               </div>
             </div>

@@ -45,7 +45,8 @@ const defaultFormData: ListingFormData = {
   rooms: "",
   squareFootage: "",
   price: "",
-  isActive: true,
+  onMarket: true, // New property (shows NEW badge)
+  isActive: true, // Active in system
   cycleGroup: 1,
   propertyTypeId: "",
   conditionId: "",
@@ -71,6 +72,7 @@ export function ListingForm({
         rooms: listing.rooms?.toString() || "",
         squareFootage: listing.squareFootage?.toString() || "",
         price: listing.price?.toString() || "",
+        onMarket: listing.onMarket,
         isActive: listing.isActive,
         cycleGroup: listing.cycleGroup,
         propertyTypeId: listing.propertyTypeId?.toString() || "",
@@ -322,23 +324,44 @@ export function ListingForm({
             </div>
           </div>
 
-          {/* Status Toggle */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
-            <div className="space-y-0.5">
-              <Label htmlFor="isActive" className="text-base font-medium">
-                Active Listing
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Active listings display &quot;NEW LISTING&quot; badge in emails
-              </p>
+          {/* Status Toggles */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="space-y-0.5">
+                <Label htmlFor="onMarket" className="text-base font-medium">
+                  New Property (On Market)
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  When enabled, displays &quot;NEW LISTING&quot; badge in emails. 
+                  Disable when property is no longer new but still for sale.
+                </p>
+              </div>
+              <Switch
+                id="onMarket"
+                checked={formData.onMarket}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, onMarket: checked })
+                }
+              />
             </div>
-            <Switch
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, isActive: checked })
-              }
-            />
+
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="space-y-0.5">
+                <Label htmlFor="isActive" className="text-base font-medium">
+                  Active Status
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Active = Property is in the system. Archived = Removed from active listings.
+                </p>
+              </div>
+              <Switch
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked })
+                }
+              />
+            </div>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
