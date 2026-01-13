@@ -4,7 +4,7 @@ Es el documento definitivo para entender qué se va a construir y por qué.
 
 ***
 
-# 🏠 Eric's Realty Admin System
+# 🏠 Real State Admin System
 **Documentación Técnica y de Producto v1.0**
 
 ## 1. Resumen Ejecutivo

@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Eric's Realty Admin",
+  title: "Real State Admin Management",
   description: "Listing Management & Drip Campaign Automation System",
 };
 

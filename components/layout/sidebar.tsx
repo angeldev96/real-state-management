@@ -75,7 +75,7 @@ export function Sidebar() {
               </div>
               <div>
                 <h1 className="font-serif text-lg font-semibold tracking-tight">
-                  Eric&apos;s Realty
+                  Real State Management
                 </h1>
                 <p className="text-xs text-sidebar-foreground/60">
                   Admin System

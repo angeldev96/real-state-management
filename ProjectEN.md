@@ -4,7 +4,7 @@ You can copy and paste this directly into the root of your repository.
 
 ***
 
-# 🏠 Eric's Realty Admin System
+# 🏠 Real State Admin System
 
 > **Listing Management & Drip Campaign Automation System**
 
