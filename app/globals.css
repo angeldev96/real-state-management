@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -180,37 +179,28 @@
   background: var(--muted-foreground);
 }
 
-/* Animations */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+/* Performance-optimized minimal animations */
+@keyframes simple-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.4s ease-out forwards;
+  animation: simple-fade 0.15s ease-out forwards;
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
-}
-
-/* Staggered children animation */
+/* Staggered children - simplified for performance */
 .stagger-children > * {
   opacity: 0;
-  animation: fade-in 0.4s ease-out forwards;
+  animation: simple-fade 0.15s ease-out forwards;
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 20ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 100ms; }
 
 /* Gradient text utility */
 .gradient-text {
@@ -220,10 +210,7 @@
   background-clip: text;
 }
 
-/* Subtle pattern background */
+/* Simplified pattern background - less expensive than radial-gradient */
 .pattern-bg {
   background-color: var(--background);
-  background-image: 
-    radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 20px 20px;
 }

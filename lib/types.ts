@@ -100,7 +100,9 @@ export interface ListingFilters {
 // =============================================================================
 
 export interface CycleStats {
-  weekNumber: 1 | 2 | 3;
+  weekNumber: number;
+  dayOfMonth: number;
+  description: string | null;
   totalListings: number;
   activeListings: number;
   nextSendDate: Date;

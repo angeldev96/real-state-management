@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, X, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,23 @@ interface ListingFiltersProps {
 }
 
 export function ListingFiltersBar({ filters, onChange }: ListingFiltersProps) {
+  // Local state for immediate UI updates
+  const [localSearch, setLocalSearch] = useState(filters.search);
+
+  // Update local search when filters change (e.g., from clear filters)
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
+
+  // Debounced search update - only update filters after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onChange({ ...filters, search: localSearch });
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [localSearch]);
+
   const activeFiltersCount = [
     filters.cycleGroup,
     filters.propertyTypeId,
@@ -33,26 +51,27 @@ export function ListingFiltersBar({ filters, onChange }: ListingFiltersProps) {
   ].filter((v) => v !== null).length;
 
   const clearFilters = () => {
-    onChange({
+    const clearedFilters = {
       search: "",
       cycleGroup: null,
       propertyTypeId: null,
       conditionId: null,
       zoningId: null,
       isActive: null,
-    });
+    };
+    onChange(clearedFilters);
   };
 
   return (
     <div className="space-y-4 mb-6">
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search */}
+        {/* Search - now debounced */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by address..."
-            value={filters.search}
-            onChange={(e) => onChange({ ...filters, search: e.target.value })}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className="pl-9"
           />
         </div>
