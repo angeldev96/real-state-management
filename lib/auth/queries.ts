@@ -213,6 +213,6 @@ export async function getUserById(id: number) {
  * Clean up expired sessions
  */
 export async function cleanupExpiredSessions(): Promise<number> {
-  const result = await db.delete(sessions).where(gt(new Date(), sessions.expiresAt));
+  const result = await db.delete(sessions).where(gt(sessions.expiresAt, new Date()));
   return result.changes || 0;
 }
