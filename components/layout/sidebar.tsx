@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -70,8 +71,13 @@ export function Sidebar() {
           {/* Logo */}
           <div className="h-20 flex items-center px-6 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-sidebar-primary-foreground" />
+              <div className="relative w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden border border-sidebar-border p-1">
+                <Image 
+                  src="https://www.eretzltd.com/wp-content/themes/eretz/images/logo.png" 
+                  alt="Eretz Realty Logo" 
+                  fill
+                  className="object-contain"
+                />
               </div>
               <div>
                 <h1 className="font-serif text-lg font-semibold tracking-tight">
