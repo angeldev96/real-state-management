@@ -192,7 +192,7 @@ export async function createUser(
       password: hashedPassword,
       name,
       role,
-    }).returning({ id: users.id });
+    }).returning();
 
     return { success: true, userId: result[0]?.id };
   } catch (error) {
@@ -212,7 +212,6 @@ export async function getUserById(id: number) {
 /**
  * Clean up expired sessions
  */
-export async function cleanupExpiredSessions(): Promise<number> {
-  const result = await db.delete(sessions).where(gt(sessions.expiresAt, new Date()));
-  return result.changes || 0;
+export async function cleanupExpiredSessions(): Promise<void> {
+  await db.delete(sessions).where(gt(sessions.expiresAt, new Date()));
 }

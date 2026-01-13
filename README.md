@@ -92,3 +92,88 @@ lib/
 | `npm run db:migrate` | Run migrations |
 | `npm run db:seed` | Seed database |
 | `npm run db:studio` | Open Drizzle Studio |
+
+---
+
+## Deployment to Vercel
+
+### Environment Variables (Required)
+
+In **Vercel Dashboard → Project Settings → Environment Variables**, add:
+
+| Variable | Value | Required |
+|----------|-------|----------|
+| `JWT_SECRET` | Generate with `openssl rand -base64 32` | ✅ Yes |
+| `NODE_ENV` | `production` | Auto-set by Vercel |
+
+### Generate JWT Secret
+
+```bash
+# Run this in your terminal and copy the output
+openssl rand -base64 32
+```
+
+### Database: Turso Setup
+
+⚠️ **SQLite does NOT work on Vercel** - use Turso instead.
+
+#### Step 1: Install Turso CLI
+
+```bash
+# macOS
+brew install tursodatabase/tap/turso
+
+# Or with curl
+curl -sSfL https://get.tur.so/install.sh | bash
+```
+
+#### Step 2: Login & Create Database
+
+```bash
+turso auth login
+turso db create eretz-realty
+```
+
+#### Step 3: Get Credentials
+
+```bash
+# Get database URL
+turso db show eretz-realty --url
+
+# Create auth token
+turso db tokens create eretz-realty
+```
+
+#### Step 4: Add to Vercel Environment Variables
+
+| Variable | Value |
+|----------|-------|
+| `JWT_SECRET` | Your generated secret |
+| `TURSO_DATABASE_URL` | `libsql://eretz-realty-YOUR_USERNAME.turso.io` |
+| `TURSO_AUTH_TOKEN` | Token from step 3 |
+
+#### Step 5: Push Schema to Turso
+
+```bash
+# Generate SQL from your schema
+npx drizzle-kit push
+```
+
+### Deploy Steps
+
+1. Push code to GitHub
+2. Connect repo in Vercel Dashboard
+3. Add environment variables (JWT_SECRET, TURSO_*)
+4. Deploy!
+5. Run migrations on Turso (see Step 5 above)
+
+---
+
+## Local Development
+
+Create `.env.local`:
+
+```env
+# Optional for local dev (has fallback)
+JWT_SECRET=any-secret-for-local-development
+```

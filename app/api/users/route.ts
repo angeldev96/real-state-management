@@ -8,15 +8,7 @@ import { eq } from "drizzle-orm";
 export async function GET() {
   try {
     const allUsers = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        role: users.role,
-        isActive: users.isActive,
-        createdAt: users.createdAt,
-        lastLoginAt: users.lastLoginAt,
-      })
+      .select()
       .from(users)
       .orderBy(users.id);
 
@@ -70,7 +62,7 @@ export async function POST(request: NextRequest) {
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }).returning({ id: users.id });
+    }).returning();
 
     return NextResponse.json({
       success: true,

@@ -32,7 +32,7 @@ export async function createListing(data: ListingFormData): Promise<ActionRespon
     };
 
     // Insert listing
-    const result = await db.insert(listings).values(listingData).returning({ id: listings.id });
+    const result = await db.insert(listings).values(listingData).returning();
     const listingId = result[0]?.id;
 
     if (!listingId) {

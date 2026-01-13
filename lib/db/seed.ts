@@ -1,10 +1,6 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
 import bcrypt from "bcryptjs";
+import { db } from "./index";
 import * as schema from "./schema";
-
-const sqlite = new Database("./local.db");
-const db = drizzle(sqlite, { schema });
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -23,10 +19,11 @@ async function seed() {
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-  });
-  console.log("  ✓ Admin user created (admin@eretzrealty.com / admin123)");
+  }).onConflictDoNothing();
+  console.log("  ✓ Admin user ready (admin@eretzrealty.com / admin123)");
 
   // Property Types
+  console.log("📦 Seeding property types...");
   await db.insert(schema.propertyTypes).values([
     { id: 1, name: "1 Family" },
     { id: 2, name: "2 Family" },
@@ -35,9 +32,10 @@ async function seed() {
     { id: 5, name: "Condo" },
     { id: 6, name: "Co-op" },
     { id: 7, name: "Lot" },
-  ]);
+  ]).onConflictDoNothing();
 
   // Conditions
+  console.log("📦 Seeding conditions...");
   await db.insert(schema.conditions).values([
     { id: 1, name: "Needs Work / Renovation" },
     { id: 2, name: "Good / Nice Condition" },
@@ -48,15 +46,17 @@ async function seed() {
     { id: 7, name: "New / Pre-Construction / Renovated" },
     { id: 8, name: "Tenant / Income Status" },
     { id: 9, name: "Shul / Special Use" },
-  ]);
+  ]).onConflictDoNothing();
 
   // Zonings
+  console.log("📦 Seeding zonings...");
   await db.insert(schema.zonings).values([
     { id: 1, code: "R5" },
     { id: 2, code: "R6" },
-  ]);
+  ]).onConflictDoNothing();
 
   // Features
+  console.log("📦 Seeding features...");
   await db.insert(schema.features).values([
     { id: 1, name: "S.Detached" },
     { id: 2, name: "Detached" },
@@ -80,14 +80,15 @@ async function seed() {
     { id: 20, name: "Hi Floor" },
     { id: 21, name: "Elevator" },
     { id: 22, name: "Backyard" },
-  ]);
+  ]).onConflictDoNothing();
 
   // Cycle Schedules
+  console.log("📦 Seeding cycle schedules...");
   await db.insert(schema.cycleSchedules).values([
     { weekNumber: 1, dayOfMonth: 1, description: "Start of the month" },
     { weekNumber: 2, dayOfMonth: 15, description: "Middle of the month" },
     { weekNumber: 3, dayOfMonth: 25, description: "End of the month" },
-  ]);
+  ]).onConflictDoNothing();
 
   // Listings
   const listingsData = [
@@ -399,10 +400,11 @@ async function seed() {
     },
   ];
 
+  console.log("📦 Seeding listings...");
   for (const listing of listingsData) {
-    await db.insert(schema.listings).values(listing);
-    console.log(`  ✓ Inserted listing ${listing.id}`);
+    await db.insert(schema.listings).values(listing).onConflictDoNothing();
   }
+  console.log(`  ✓ Listings ready`);
 
   // Listing Features (many-to-many)
   const listingFeatures = [
@@ -447,9 +449,10 @@ async function seed() {
     { listingId: 119, featureId: 5 },
   ];
 
-  await db.insert(schema.listingFeatures).values(listingFeatures);
+  console.log("📦 Seeding listing features...");
+  await db.insert(schema.listingFeatures).values(listingFeatures).onConflictDoNothing();
 
-  console.log("✅ Database seeded successfully!");
+  console.log("\n✅ Database seeded successfully!");
   process.exit(0);
 }
 

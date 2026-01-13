@@ -52,7 +52,7 @@ export async function getAllListingsWithRelations(): Promise<ListingWithRelation
     .orderBy(listings.id);
 
   // Get all features for all listings in a single query
-  const listingIds = allListings.map((l) => l.listing.id);
+  const listingIds = allListings.map((l: any) => l.listing.id);
   const allFeatures = await db
     .select({
       listingId: listingFeatures.listingId,
@@ -72,7 +72,7 @@ export async function getAllListingsWithRelations(): Promise<ListingWithRelation
   }
 
   // Combine results
-  return allListings.map(({ listing, propertyType, condition, zoning }) => {
+  return allListings.map(({ listing, propertyType, condition, zoning }: any) => {
     const features = featuresMap.get(listing.id) || [];
     return {
       ...listing,
@@ -80,7 +80,7 @@ export async function getAllListingsWithRelations(): Promise<ListingWithRelation
       condition,
       zoning,
       cycleGroup: listing.cycleGroup as 1 | 2 | 3, // Cast to the correct type
-      featureIds: features.map(f => f.id), // Extract IDs for backward compatibility
+      featureIds: features.map((f: any) => f.id), // Extract IDs for backward compatibility
       features,
     };
   });
@@ -104,7 +104,7 @@ export async function getListingsByCycle(cycleGroup: number): Promise<ListingWit
   if (cycleListings.length === 0) return [];
 
   // Get features for these listings
-  const listingIds = cycleListings.map((l) => l.listing.id);
+  const listingIds = cycleListings.map((l: any) => l.listing.id);
   const allFeatures = await db
     .select({
       listingId: listingFeatures.listingId,
@@ -122,7 +122,7 @@ export async function getListingsByCycle(cycleGroup: number): Promise<ListingWit
     featuresMap.get(feature.listingId)!.push(feature.feature);
   }
 
-  return cycleListings.map(({ listing, propertyType, condition, zoning }) => {
+  return cycleListings.map(({ listing, propertyType, condition, zoning }: any) => {
     const features = featuresMap.get(listing.id) || [];
     return {
       ...listing,
@@ -130,7 +130,7 @@ export async function getListingsByCycle(cycleGroup: number): Promise<ListingWit
       condition,
       zoning,
       cycleGroup: listing.cycleGroup as 1 | 2 | 3, // Cast to the correct type
-      featureIds: features.map(f => f.id), // Extract IDs for backward compatibility
+      featureIds: features.map((f: any) => f.id), // Extract IDs for backward compatibility
       features,
     };
   });
@@ -144,7 +144,7 @@ export async function getCycleStats(): Promise<CycleStats[]> {
   const schedules = await getCycleSchedules();
 
   const stats = await Promise.all(
-    schedules.map(async (schedule) => {
+    schedules.map(async (schedule: any) => {
       const cycleListings = await db
         .select()
         .from(listings)
@@ -155,7 +155,7 @@ export async function getCycleStats(): Promise<CycleStats[]> {
         dayOfMonth: schedule.dayOfMonth,
         description: schedule.description,
         totalListings: cycleListings.length,
-        activeListings: cycleListings.filter((l) => l.onMarket).length,
+        activeListings: cycleListings.filter((l: any) => l.onMarket).length,
         nextSendDate: getNextSendDate(schedule.dayOfMonth),
       };
     })
@@ -208,14 +208,14 @@ export async function getListingById(id: number): Promise<ListingWithRelations |
     .innerJoin(features, eq(listingFeatures.featureId, features.id))
     .where(eq(listingFeatures.listingId, id));
 
-  const featureItems: Array<{ id: number; name: string }> = listingFeaturesData.map((f) => f.feature);
+  const featureItems: Array<{ id: number; name: string }> = listingFeaturesData.map((f: any) => f.feature);
   return {
     ...listing,
     propertyType,
     condition,
     zoning,
     cycleGroup: listing.cycleGroup as 1 | 2 | 3, // Cast to the correct type
-    featureIds: featureItems.map(f => f.id), // Extract IDs for backward compatibility
+    featureIds: featureItems.map((f: any) => f.id), // Extract IDs for backward compatibility
     features: featureItems,
   };
 }
@@ -240,8 +240,8 @@ export async function getSummaryStats() {
   const allListings = await db.select().from(listings);
 
   const total = allListings.length;
-  const newListings = allListings.filter((l) => l.onMarket).length;
-  const active = allListings.filter((l) => l.isActive).length;
+  const newListings = allListings.filter((l: any) => l.onMarket).length;
+  const active = allListings.filter((l: any) => l.isActive).length;
 
   return {
     total,
