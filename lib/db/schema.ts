@@ -2,6 +2,34 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 // =============================================================================
+// USERS TABLE (Authentication)
+// =============================================================================
+
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // Hashed with bcrypt
+  name: text("name").notNull(),
+  role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  lastLoginAt: integer("last_login_at", { mode: "timestamp" }),
+});
+
+// =============================================================================
+// SESSIONS TABLE (JWT Refresh Tokens)
+// =============================================================================
+
+export const sessions = sqliteTable("sessions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(), // Refresh token
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// =============================================================================
 // LOOKUP TABLES (Catalog Tables)
 // =============================================================================
 
@@ -87,3 +115,6 @@ export type Condition = typeof conditions.$inferSelect;
 export type Zoning = typeof zonings.$inferSelect;
 export type Feature = typeof features.$inferSelect;
 export type CycleSchedule = typeof cycleSchedules.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Session = typeof sessions.$inferSelect;

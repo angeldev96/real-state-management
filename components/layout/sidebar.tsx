@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Building2,
-  Settings,
   Calendar,
   Menu,
   X,
+  LogOut,
+  User,
+  Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -34,11 +36,56 @@ const navigation = [
     icon: Calendar,
     description: "Configure send dates",
   },
+  {
+    name: "Users",
+    href: "/users",
+    icon: Users,
+    description: "Manage admin accounts",
+  },
 ];
+
+interface UserSession {
+  userId: number;
+  email: string;
+  name: string;
+  role: string;
+}
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Fetch user session
+  useEffect(() => {
+    async function fetchSession() {
+      try {
+        const response = await fetch("/api/auth/session");
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error("Failed to fetch session:", error);
+      }
+    }
+    fetchSession();
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <>
@@ -133,17 +180,33 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="px-4 py-3 rounded-lg bg-sidebar-accent/50">
-              <p className="text-xs text-sidebar-foreground/60 mb-1">
-                Next Email Send
-              </p>
-              <p className="text-sm font-medium text-sidebar-primary">
-                Jan 15, 2026
-              </p>
-              <p className="text-xs text-sidebar-foreground/50">Week 2 Cycle</p>
-            </div>
+          {/* User Section & Logout */}
+          <div className="p-4 border-t border-sidebar-border space-y-3">
+            {/* User Info */}
+            {user && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-sidebar-accent/30">
+                <div className="w-9 h-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
+                  <User className="w-4 h-4 text-sidebar-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                  <p className="text-xs text-sidebar-foreground/50 truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Logout Button */}
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 px-4 py-3 h-auto text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="w-5 h-5" />
+              <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
+            </Button>
           </div>
         </div>
       </aside>

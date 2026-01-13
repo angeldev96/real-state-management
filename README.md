@@ -1,114 +1,94 @@
-# 🏠 Eretz Realty Admin
-**Definitive README (Frontend Only, Mock Data)**
+# Eretz Realty Admin
 
-This document summarizes what was built, why, and how to extend it. It is ready to share with the Product Owner.
+**Listing Management & Drip Campaign Automation System**
 
----
+## Quick Start
 
-## 1) Executive Overview
-- Goal: Centralize messy listing spreadsheets into a normalized system, enable curated weekly drip emails, and keep exclusivity over the data.
-- Status: Frontend built in Next.js (App Router) with Tailwind/Shadcn. Uses mock data from `legacy.csv` and `dropdown.txt`. No backend yet.
-- Core pillars:
-  - **Curation over automation**: Eretz manually assigns each property to a “cycle group” (Week 1/2/3).
-  - **Data integrity by design**: All categorizable fields use dropdowns/lookups; no free text for categories.
-  - **Scheduler-first**: The email cycle is the heart of the product.
+```bash
+npm install
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
 
----
-
-## 2) Core Business Logic: “The Cycle”
-The system sends listings in three curated waves per month:
-- **Week 1** → default day `1`
-- **Week 2** → default day `15`
-- **Week 3** → default day `25` (safer than 30 for February)
-
-Key rules:
-1) No "blast all". Properties are rotated across weeks.
-2) Manual curation: Eretz picks the cycle for each property to keep a balanced mix.
-3) **Two separate status fields**:
-   - `on_market` (boolean): `TRUE` = New property (displays "NEW LISTING" badge in emails), `FALSE` = Not new but still for sale (no badge)
-   - `is_active` (boolean): `TRUE` = Active in system, `FALSE` = Archived (removed from active listings)
-4) `cycle_group` (1|2|3) controls **when** the email is sent, independent of status fields.
-5) Dates are configurable in **Settings** (`cycle_schedules`).
-
-Workflow:
-1) Eretz creates/edits a listing, picks `cycle_group` (1/2/3), sets `on_market` (new or not), and `is_active` (active or archived).
-2) Scheduler (future backend) sends the listings for that group on the configured day.
+**Login**: `admin@eretzrealty.com` / `admin123`
 
 ---
 
-## 3) Database Design (PostgreSQL)
-Even though we’re currently using mock data, the schema is ready for a real DB. Mirrors `database.sql`.
+## Overview
 
-Lookup tables (feed dropdowns):
-- `property_types` (id, name)
-- `conditions` (id, name)
-- `zonings` (id, code)
-- `features` (id, name)
-
-Core tables:
-- `listings`
-  - `id`, `address`, `location_description`, `dimensions`
-  - `rooms` (nullable), `square_footage` (nullable), `price` (nullable)
-  - `on_market` (bool): `TRUE` = New property (shows "NEW" badge), `FALSE` = Not new but still for sale
-  - `is_active` (bool): `TRUE` = Active in system, `FALSE` = Archived
-  - `cycle_group` (1|2|3): Controls which weekly cycle sends this listing
-  - FKs: `property_type_id`, `condition_id`, `zoning_id`
-  - Timestamps
-- `listing_features` (pivot many-to-many)
-- `cycle_schedules` (week_number PK, day_of_month, description)
-
-Indexes in `database.sql`:
-- `idx_listings_cycle_active` on (`cycle_group`, `is_active`) to speed up scheduler queries.
-- `idx_listings_on_market` on (`on_market`) WHERE `on_market = TRUE` to filter new listings efficiently.
+Full-stack application for managing property listings with:
+- Next.js 16 (App Router) + TypeScript
+- SQLite backend with Drizzle ORM
+- JWT authentication with secure sessions
+- Shadcn UI components
 
 ---
 
-## 4) Frontend Implementation
-Tech stack:
-- **Next.js 16 (App Router) + TypeScript**
-- **Tailwind v4 + Shadcn UI + Lucide icons**
-- **Mock data**: `lib/mock-data.ts` (parsed/cleaned from `legacy.csv` and `dropdown.txt`)
+## Core Business Logic: The Cycle
 
-Key screens:
-- **Cycle Manager (Dashboard)** `app/page.tsx`
-  - Tabs Week 1/2/3 with cards per property.
-  - Cycle stat cards: total vs active, next send date, “next up” badge.
-- **All Listings** `app/listings/page.tsx`
-  - Table view (sortable) and Grid view (cards).
-  - Faceted filters: cycle, type, zoning, condition, status, search by address.
-- **Settings** `app/settings/page.tsx`
-  - Edit cycle send days (1–31) for Week 1/2/3.
-  - Shows next computed date based on today.
+Properties are sent in three curated waves per month:
+- **Week 1** → Day 1
+- **Week 2** → Day 15  
+- **Week 3** → Day 25
 
-Shared components:
-- `listing-form` (create/edit) with strict dropdowns and multi-select features.
-- `listings-table` (sorting, actions), `listing-card`, `listing-filters`, `multi-select`.
-- `sidebar`, `page-header`, `cycle-stats-card`.
+### Status Fields
 
-Theme:
-- Custom Tailwind theme (emerald/gold accents), responsive, with subtle animations and data-friendly layout.
+| Field | TRUE | FALSE |
+|-------|------|-------|
+| `on_market` | Shows "NEW" badge | No badge (still for sale) |
+| `is_active` | Active in system | Archived |
 
 ---
 
-## 5) Mock Data & Types
-- Types live in `lib/types.ts`.
-- Mock data + helpers in `lib/mock-data.ts`:
-  - Lookup seeds from `dropdown.txt`.
-  - 18 cleaned listings from `legacy.csv` with enriched relations.
-  - Helpers to format price/sqft, compute next send date, and resolve relations.
+## Database Schema
+
+### Auth Tables
+- `users` - Admin accounts (email, password, role)
+- `sessions` - JWT refresh tokens
+
+### Core Tables
+- `listings` - Properties with cycle_group, on_market, is_active
+- `property_types`, `conditions`, `zonings`, `features` - Lookups
+- `listing_features` - Many-to-many pivot
+- `cycle_schedules` - Send day configuration
 
 ---
 
----
+## Auth System
 
-## 7) Next Steps (Backend & Scheduler)
-- Add API Routes (Next.js) or a small service to:
-  - CRUD listings and lookups.
-  - Persist filters/pagination.
-  - Expose a scheduler endpoint to be triggered by cron/queue.
-- Implement email sender (Resend/SendGrid/SMTP).
-- Apply `database.sql` to Postgres and wire Prisma/Drizzle.
-- Add authentication/roles and audit logs.
+- **JWT tokens**: 15min access, 7d refresh
+- **bcrypt**: 12 rounds password hashing
+- **httpOnly cookies**: XSS protection
+- **Middleware**: Protects all routes except /login
 
 ---
 
+## Project Structure
+
+```
+app/
+  api/auth/     - Login, logout, session APIs
+  login/        - Login page
+  listings/     - Listings management
+  settings/     - Scheduler settings
+  page.tsx      - Dashboard
+
+lib/
+  auth/         - JWT, passwords, sessions
+  db/           - Schema, queries, migrations
+  actions.ts    - Server actions
+```
+
+---
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run db:generate` | Generate migrations |
+| `npm run db:migrate` | Run migrations |
+| `npm run db:seed` | Seed database |
+| `npm run db:studio` | Open Drizzle Studio |

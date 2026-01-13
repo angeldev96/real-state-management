@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import bcrypt from "bcryptjs";
 import * as schema from "./schema";
 
 const sqlite = new Database("./local.db");
@@ -7,6 +8,23 @@ const db = drizzle(sqlite, { schema });
 
 async function seed() {
   console.log("🌱 Seeding database...");
+
+  // ==========================================================================
+  // USERS (Admin account)
+  // ==========================================================================
+  console.log("\n📦 Creating admin user...");
+  const hashedPassword = await bcrypt.hash("admin123", 12);
+  await db.insert(schema.users).values({
+    id: 1,
+    email: "admin@eretzrealty.com",
+    password: hashedPassword,
+    name: "Admin User",
+    role: "admin",
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  console.log("  ✓ Admin user created (admin@eretzrealty.com / admin123)");
 
   // Property Types
   await db.insert(schema.propertyTypes).values([
