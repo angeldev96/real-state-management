@@ -75,7 +75,7 @@ export function Sidebar() {
               </div>
               <div>
                 <h1 className="font-serif text-lg font-semibold tracking-tight">
-                  Real State Management
+                  Eretz Realty
                 </h1>
                 <p className="text-xs text-sidebar-foreground/60">
                   Admin System

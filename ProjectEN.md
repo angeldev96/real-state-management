@@ -4,13 +4,13 @@ You can copy and paste this directly into the root of your repository.
 
 ***
 
-# 🏠 Real State Admin System
+# 🏠 Eretz Realty Admin System
 
 > **Listing Management & Drip Campaign Automation System**
 
 ## 📖 Overview
 
-This project was initiated to solve a critical operational bottleneck for **Eric's Realty**: the management of property listings using disorganized spreadsheets ("messy data") and manual email processes.
+This project was initiated to solve a critical operational bottleneck for **Eretz Realty**: the management of property listings using disorganized spreadsheets ("messy data") and manual email processes.
 
 The goal is to centralize all listings into a normalized database, enable management via a modern CRUD Dashboard, and—most importantly—implement a **Weekly Cycle Logic** to protect the client's data exclusivity against competitors while automating marketing.
 
@@ -21,7 +21,7 @@ The goal is to centralize all listings into a normalized database, enable manage
 This is the kernel of the system. The client **DOES NOT** send all listings to subscribers at once. He uses a manual rotation strategy.
 
 ### 1. Manual Assignment (The Input)
-There is no automatic algorithm to group properties. The client (Eric) acts as a **"Curator."** When creating or editing a property, he subjectively decides which group a property belongs to in order to ensure an attractive "mix" of deals (e.g., balancing luxury homes with fixer-uppers).
+There is no automatic algorithm to group properties. The client (Eretz) acts as a **"Curator."** When creating or editing a property, he subjectively decides which group a property belongs to in order to ensure an attractive "mix" of deals (e.g., balancing luxury homes with fixer-uppers).
 *   **Group 1 (Week 1)**
 *   **Group 2 (Week 2)**
 *   **Group 3 (Week 3)**

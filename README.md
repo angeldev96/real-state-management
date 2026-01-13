@@ -1,4 +1,4 @@
-# 🏠 Real State Admin Management
+# 🏠 Eretz Realty Admin
 **Definitive README (Frontend Only, Mock Data)**
 
 This document summarizes what was built, why, and how to extend it. It is ready to share with the Product Owner.
@@ -9,7 +9,7 @@ This document summarizes what was built, why, and how to extend it. It is ready 
 - Goal: Centralize messy listing spreadsheets into a normalized system, enable curated weekly drip emails, and keep exclusivity over the data.
 - Status: Frontend built in Next.js (App Router) with Tailwind/Shadcn. Uses mock data from `legacy.csv` and `dropdown.txt`. No backend yet.
 - Core pillars:
-  - **Curation over automation**: Eric manually assigns each property to a “cycle group” (Week 1/2/3).
+  - **Curation over automation**: Eretz manually assigns each property to a “cycle group” (Week 1/2/3).
   - **Data integrity by design**: All categorizable fields use dropdowns/lookups; no free text for categories.
   - **Scheduler-first**: The email cycle is the heart of the product.
 
@@ -23,12 +23,12 @@ The system sends listings in three curated waves per month:
 
 Key rules:
 1) No “blast all”. Properties are rotated across weeks.
-2) Manual curation: Eric picks the cycle for each property to keep a balanced mix.
+2) Manual curation: Eretz picks the cycle for each property to keep a balanced mix.
 3) `is_active` ≠ “which week”. `is_active` controls the “NEW LISTING” badge; `cycle_group` controls when it’s emailed.
 4) Dates are configurable in **Settings** (`cycle_schedules`).
 
 Workflow:
-1) Eric creates/edits a listing, picks `cycle_group` (1/2/3), and toggles `is_active`.
+1) Eretz creates/edits a listing, picks `cycle_group` (1/2/3), and toggles `is_active`.
 2) Scheduler (future backend) sends the listings for that group on the configured day.
 
 ---

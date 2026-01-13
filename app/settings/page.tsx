@@ -207,7 +207,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              The <strong>Cycle System</strong> is the core of Eric&apos;s Realty
+              The <strong>Cycle System</strong> is the core of Eretz Realty
               marketing strategy. Instead of sending all listings at once, properties
               are distributed across three weekly cycles.
             </p>
