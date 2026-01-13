@@ -1,123 +1,108 @@
-Aquí tienes la **Documentación Maestra del Proyecto**. Este documento integra la visión de negocio, la lógica técnica del "Ciclo", la estructura de base de datos normalizada y la estrategia de UX basada en Dropdowns inteligentes.
+# 🏠 Real State Admin Management
+**Definitive README (Frontend Only, Mock Data)**
 
-Es el documento definitivo para entender qué se va a construir y por qué.
-
-***
-
-# 🏠 Real State Admin System
-**Documentación Técnica y de Producto v1.0**
-
-## 1. Resumen Ejecutivo
-Este sistema es una plataforma de administración personalizada (Dashboard & CRM Lite) diseñada para **Eric's Realty**. Su propósito es migrar la gestión de propiedades desde hojas de cálculo desorganizadas ("Messy Data") a una base de datos relacional robusta, y automatizar el envío de correos electrónicos a clientes mediante una estrategia de marketing de **"Ciclos Semanales"**.
-
-El pilar fundamental del sistema es la **Integridad de Datos**: Se prohíbe la entrada de texto libre en campos categorizables, obligando al usuario a usar selectores (Dropdowns) predefinidos.
+This document summarizes what was built, why, and how to extend it. It is ready to share with the Product Owner.
 
 ---
 
-## 2. Lógica de Negocio: "El Ciclo" (The Cycle) 🔄
-
-El cliente utiliza una estrategia de marketing de "goteo" (drip campaign) para proteger su base de datos y mantener el interés de los suscriptores.
-
-### Reglas del Juego:
-1.  **Rotación, no Explosión:** No se envían todas las propiedades a la vez.
-2.  **Curación Manual:** No hay algoritmo de asignación. El cliente decide subjetivamente qué propiedades van en cada grupo para asegurar una mezcla atractiva (ej. "Esta semana quiero una de lujo y dos económicas").
-3.  **Grupos de Envío:**
-    *   **Week 1:** Se dispara el día **1** del mes.
-    *   **Week 2:** Se dispara el día **15** del mes.
-    *   **Week 3:** Se dispara el día **30** del mes.
-    *(Nota: Las fechas deben ser configurables).*
-
-### Flujo de Trabajo:
-1.  Eric ingresa una propiedad.
-2.  Selecciona manualmente el **`Cycle Group`** (1, 2 o 3).
-3.  Marca la propiedad como **`Active`** si es nueva.
-4.  El sistema (Scheduler) espera a la fecha programada y envía el email con las propiedades de ese grupo.
+## 1) Executive Overview
+- Goal: Centralize messy listing spreadsheets into a normalized system, enable curated weekly drip emails, and keep exclusivity over the data.
+- Status: Frontend built in Next.js (App Router) with Tailwind/Shadcn. Uses mock data from `legacy.csv` and `dropdown.txt`. No backend yet.
+- Core pillars:
+  - **Curation over automation**: Eric manually assigns each property to a “cycle group” (Week 1/2/3).
+  - **Data integrity by design**: All categorizable fields use dropdowns/lookups; no free text for categories.
+  - **Scheduler-first**: The email cycle is the heart of the product.
 
 ---
 
-## 3. Estrategia de UX/UI: Dropdowns & Normalización 🛡️
+## 2) Core Business Logic: “The Cycle”
+The system sends listings in three curated waves per month:
+- **Week 1** → default day `1`
+- **Week 2** → default day `15`
+- **Week 3** → default day `25` (safer than 30 for February)
 
-Para solucionar el caos de datos actual (ej. notas como "Beautiful" vs "Super Shiny Beautiful"), la interfaz **bloquea la creatividad innecesaria** en la entrada de datos.
+Key rules:
+1) No “blast all”. Properties are rotated across weeks.
+2) Manual curation: Eric picks the cycle for each property to keep a balanced mix.
+3) `is_active` ≠ “which week”. `is_active` controls the “NEW LISTING” badge; `cycle_group` controls when it’s emailed.
+4) Dates are configurable in **Settings** (`cycle_schedules`).
 
-### El Formulario de Propiedad (`ListingForm`)
-Este es el componente más complejo y vital. No usa `<input type="text">` para categorías. Usa componentes de **Shadcn UI**:
-
-1.  **Comboboxes (Selectores con Búsqueda):**
-    *   Para **`Property Type`** (1 Family, Condo, etc.) y **`Zoning`** (R5, R6).
-    *   Permite escribir para filtrar opciones, pero solo permite seleccionar valores existentes.
-2.  **Multi-Select Inteligente (Many-to-Many):**
-    *   Para **`Features`** (Garage, Backyard, Elevator).
-    *   El usuario selecciona múltiples etiquetas (Tags) que se acumulan en el campo.
-    *   Esto alimenta la tabla pivote en la base de datos.
-3.  **Selector de Ciclo:**
-    *   Un `ToggleGroup` o `RadioGroup` claro y grande: **[ Week 1 ] [ Week 2 ] [ Week 3 ]**.
-4.  **Manejo de Datos Sucios (Messy Data):**
-    *   Campos numéricos como `Price` o `Square Footage` aceptan valores vacíos (`NULL`) para no romper la importación de datos antiguos incompletos.
+Workflow:
+1) Eric creates/edits a listing, picks `cycle_group` (1/2/3), and toggles `is_active`.
+2) Scheduler (future backend) sends the listings for that group on the configured day.
 
 ---
 
-## 4. Arquitectura de Base de Datos (PostgreSQL) 🗄️
+## 3) Database Design (PostgreSQL)
+Even though we’re currently using mock data, the schema is ready for a real DB. Mirrors `database.sql`.
 
-Diseño relacional normalizado para soportar los Dropdowns.
+Lookup tables (feed dropdowns):
+- `property_types` (id, name)
+- `conditions` (id, name)
+- `zonings` (id, code)
+- `features` (id, name)
 
-### Tablas Catálogo (Lookups)
-Estas tablas alimentan los Dropdowns del Frontend. El admin puede agregar nuevas opciones aquí si el negocio cambia.
-*   `property_types` (id, name)
-*   `conditions` (id, name)
-*   `zonings` (id, code)
-*   `features` (id, name)
+Core tables:
+- `listings`
+  - `id`, `address`, `location_description`, `dimensions`
+  - `rooms` (nullable), `square_footage` (nullable), `price` (nullable)
+  - `is_active` (bool), `cycle_group` (1|2|3)
+  - FKs: `property_type_id`, `condition_id`, `zoning_id`
+  - Timestamps
+- `listing_features` (pivot many-to-many)
+- `cycle_schedules` (week_number PK, day_of_month, description)
 
-### Tabla Principal (`listings`)
-*   `id`: PK
-*   `address`: Text
-*   `price`: Numeric (Nullable)
-*   `rooms`: Numeric (Nullable)
-*   `square_footage`: Integer (Nullable)
-*   `is_active`: Boolean (Determina si lleva el badge "NEW" en el email)
-*   `cycle_group`: Integer (1, 2, 3) - **CRÍTICO PARA EL SCHEDULER**
-*   `property_type_id`: FK -> `property_types`
-*   `condition_id`: FK -> `conditions`
-*   `zoning_id`: FK -> `zonings`
-
-### Tabla Pivote
-*   `listing_features`: Relaciona `listing_id` <-> `feature_id`.
-
-### Tabla Configuración
-*   `cycle_schedules`: Guarda qué día del mes sale cada grupo.
+Index in `database.sql`:
+- `idx_listings_cycle_active` on (`cycle_group`, `is_active`) to speed up scheduler queries.
 
 ---
 
-## 5. Especificaciones Técnicas (Stack) 🛠️
+## 4) Frontend Implementation
+Tech stack:
+- **Next.js 16 (App Router) + TypeScript**
+- **Tailwind v4 + Shadcn UI + Lucide icons**
+- **Mock data**: `lib/mock-data.ts` (parsed/cleaned from `legacy.csv` and `dropdown.txt`)
 
-*   **Frontend Framework:** Next.js 15 (App Router).
-*   **Lenguaje:** TypeScript (Tipado estricto para evitar errores con los nulos).
-*   **Componentes UI:** Shadcn UI (Radix Primitives).
-    *   Vital: `Command`, `Popover`, `Dialog`, `Table`, `Tabs`, `Form`.
-*   **Base de Datos:** PostgreSQL (alojado en Supabase, Neon o similar).
-*   **ORM:** Prisma o Drizzle (Recomendado para manejar las relaciones FK fácilmente).
+Key screens:
+- **Cycle Manager (Dashboard)** `app/page.tsx`
+  - Tabs Week 1/2/3 with cards per property.
+  - Cycle stat cards: total vs active, next send date, “next up” badge.
+- **All Listings** `app/listings/page.tsx`
+  - Table view (sortable) and Grid view (cards).
+  - Faceted filters: cycle, type, zoning, condition, status, search by address.
+- **Settings** `app/settings/page.tsx`
+  - Edit cycle send days (1–31) for Week 1/2/3.
+  - Shows next computed date based on today.
+
+Shared components:
+- `listing-form` (create/edit) with strict dropdowns and multi-select features.
+- `listings-table` (sorting, actions), `listing-card`, `listing-filters`, `multi-select`.
+- `sidebar`, `page-header`, `cycle-stats-card`.
+
+Theme:
+- Custom Tailwind theme (emerald/gold accents), responsive, with subtle animations and data-friendly layout.
 
 ---
 
-## 6. Vistas del Sistema (Frontend Scope)
-
-1.  **Dashboard Principal (Cycle Manager):**
-    *   Uso de **Tabs** para navegar entre Week 1, 2 y 3.
-    *   Vista rápida de qué propiedades saldrán en el próximo envío.
-2.  **Tabla Maestra de Listados:**
-    *   **Faceted Filters:** Una barra de herramientas avanzada para filtrar por múltiples criterios usando los mismos Dropdowns (ej. "Ver solo R6 que sean Condos").
-3.  **Configuración (Settings):**
-    *   Panel para editar los días de disparo del Scheduler.
-    *   (Opcional) Panel ABM para agregar nuevos "Features" o "Tipos" a los dropdowns.
+## 5) Mock Data & Types
+- Types live in `lib/types.ts`.
+- Mock data + helpers in `lib/mock-data.ts`:
+  - Lookup seeds from `dropdown.txt`.
+  - 18 cleaned listings from `legacy.csv` with enriched relations.
+  - Helpers to format price/sqft, compute next send date, and resolve relations.
 
 ---
 
-## 7. Roadmap de Implementación Sugerido
+---
 
-1.  **Base de Datos:** Correr scripts SQL para crear tablas y relaciones.
-2.  **Seeds:** Poblar las tablas catálogo (Features, Zoning, etc.) con los datos del `dropdown.txt`.
-3.  **Frontend Core:** Configurar Next.js + Shadcn.
-4.  **UI Components:** Crear el `MultiSelect` custom y los `Comboboxes`.
-5.  **Feature de CRUD:** Implementar el formulario de creación de propiedades con validación.
-6.  **Vista Dashboard:** Implementar la lógica de Tabs por Ciclo.
-7.  **Backend:** Conectar con API Routes y Base de Datos.
-8.  **Scheduler:** Script de automatización de emails.
+## 7) Next Steps (Backend & Scheduler)
+- Add API Routes (Next.js) or a small service to:
+  - CRUD listings and lookups.
+  - Persist filters/pagination.
+  - Expose a scheduler endpoint to be triggered by cron/queue.
+- Implement email sender (Resend/SendGrid/SMTP).
+- Apply `database.sql` to Postgres and wire Prisma/Drizzle.
+- Add authentication/roles and audit logs.
+
+---
+
