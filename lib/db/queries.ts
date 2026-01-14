@@ -1,6 +1,7 @@
 import { db } from "./index";
-import { listings, propertyTypes, conditions, zonings, features, listingFeatures, cycleSchedules } from "./schema";
+import { listings, propertyTypes, conditions, zonings, features, listingFeatures, cycleSchedules, emailRecipients } from "./schema";
 import { eq, and, inArray } from "drizzle-orm";
+import type { NewEmailRecipient, EmailRecipient } from "./schema";
 
 // Types for our enriched data - matches the original ListingWithRelations type
 export interface ListingWithRelations {
@@ -274,4 +275,78 @@ export async function getSummaryStats() {
     newListings,
     active,
   };
+}
+
+// =============================================================================
+// EMAIL RECIPIENTS QUERIES
+// =============================================================================
+
+// Get all email recipients
+export async function getAllEmailRecipients(): Promise<EmailRecipient[]> {
+  const recipients = await db.select().from(emailRecipients);
+  return recipients;
+}
+
+// Get active email recipients only
+export async function getActiveEmailRecipients(): Promise<EmailRecipient[]> {
+  const recipients = await db
+    .select()
+    .from(emailRecipients)
+    .where(eq(emailRecipients.isActive, true));
+  return recipients;
+}
+
+// Get recipient by ID
+export async function getEmailRecipientById(id: number): Promise<EmailRecipient | undefined> {
+  const [recipient] = await db
+    .select()
+    .from(emailRecipients)
+    .where(eq(emailRecipients.id, id));
+  return recipient;
+}
+
+// Get recipient by email
+export async function getEmailRecipientByEmail(email: string): Promise<EmailRecipient | undefined> {
+  const [recipient] = await db
+    .select()
+    .from(emailRecipients)
+    .where(eq(emailRecipients.email, email));
+  return recipient;
+}
+
+// Create new email recipient
+export async function createEmailRecipient(data: NewEmailRecipient): Promise<EmailRecipient> {
+  const [newRecipient] = await db.insert(emailRecipients).values(data).returning();
+  return newRecipient;
+}
+
+// Update email recipient
+export async function updateEmailRecipient(
+  id: number,
+  data: Partial<NewEmailRecipient>
+): Promise<EmailRecipient | undefined> {
+  const [updated] = await db
+    .update(emailRecipients)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(emailRecipients.id, id))
+    .returning();
+  return updated;
+}
+
+// Toggle active status
+export async function toggleEmailRecipientActive(id: number): Promise<EmailRecipient | undefined> {
+  const recipient = await getEmailRecipientById(id);
+  if (!recipient) return undefined;
+
+  const [updated] = await db
+    .update(emailRecipients)
+    .set({ isActive: !recipient.isActive, updatedAt: new Date() })
+    .where(eq(emailRecipients.id, id))
+    .returning();
+  return updated;
+}
+
+// Delete email recipient
+export async function deleteEmailRecipient(id: number): Promise<void> {
+  await db.delete(emailRecipients).where(eq(emailRecipients.id, id));
 }

@@ -64,6 +64,19 @@ export const cycleSchedules = sqliteTable("cycle_schedules", {
 });
 
 // =============================================================================
+// EMAIL RECIPIENTS (Email Distribution List)
+// =============================================================================
+
+export const emailRecipients = sqliteTable("email_recipients", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  name: text("name"), // Optional name for the recipient
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// =============================================================================
 // MAIN TABLE: LISTINGS
 // =============================================================================
 
@@ -118,3 +131,5 @@ export type CycleSchedule = typeof cycleSchedules.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
+export type EmailRecipient = typeof emailRecipients.$inferSelect;
+export type NewEmailRecipient = typeof emailRecipients.$inferInsert;

@@ -6,7 +6,8 @@ import { listings, listingFeatures } from "./db/schema";
 import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
 import { sendTestEmail, sendSamplePropertiesEmail } from "./email";
-import { updateAllCycleSchedules as dbUpdateAllCycleSchedules, getAllListingsWithRelations } from "./db/queries";
+import { updateAllCycleSchedules as dbUpdateAllCycleSchedules, getAllListingsWithRelations, createEmailRecipient, getAllEmailRecipients, getEmailRecipientByEmail, updateEmailRecipient, deleteEmailRecipient, toggleEmailRecipientActive } from "./db/queries";
+import { getSession } from "./auth/session";
 
 export type ActionResponse = {
   success: boolean;
@@ -236,6 +237,10 @@ export interface CycleScheduleData {
 
 export async function updateCycleSchedules(data: CycleScheduleData): Promise<ActionResponse> {
   try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
     const schedules = [
       { weekNumber: 1 as const, dayOfMonth: data.week1Day, description: "Typically properties for start of month" },
       { weekNumber: 2 as const, dayOfMonth: data.week2Day, description: "Mid-month property collection" },
@@ -250,6 +255,183 @@ export async function updateCycleSchedules(data: CycleScheduleData): Promise<Act
     return {
       success: false,
       message: "Failed to update schedule",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// =============================================================================
+// EMAIL RECIPIENTS ACTIONS
+// =============================================================================
+
+export interface EmailRecipientData {
+  email: string;
+  name?: string;
+}
+
+// Add email recipient
+export async function addEmailRecipient(data: EmailRecipientData): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { success: false, message: "Invalid email format" };
+    }
+
+    // Check if email already exists
+    const existing = await getEmailRecipientByEmail(data.email);
+    if (existing) {
+      return { success: false, message: "This email is already in the list" };
+    }
+
+    const newRecipient = await createEmailRecipient({
+      email: data.email.toLowerCase().trim(),
+      name: data.name?.trim() || null,
+      isActive: true,
+    });
+
+    revalidatePath("/settings");
+    return {
+      success: true,
+      message: "Email added successfully",
+      data: newRecipient,
+    };
+  } catch (error) {
+    console.error("Error adding email recipient:", error);
+    return {
+      success: false,
+      message: "Failed to add email",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Get all email recipients
+export async function getEmailRecipients(): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+    const recipients = await getAllEmailRecipients();
+    return {
+      success: true,
+      message: "Email recipients retrieved",
+      data: recipients,
+    };
+  } catch (error) {
+    console.error("Error fetching email recipients:", error);
+    return {
+      success: false,
+      message: "Failed to retrieve emails",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Update email recipient
+export async function updateEmailRecipientAction(
+  id: number,
+  data: EmailRecipientData
+): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    // Validate email format if provided
+    if (data.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        return { success: false, message: "Invalid email format" };
+      }
+
+      // Check if email already exists (excluding current record)
+      const existing = await getEmailRecipientByEmail(data.email);
+      if (existing && existing.id !== id) {
+        return { success: false, message: "This email is already in the list" };
+      }
+    }
+
+    const updated = await updateEmailRecipient(id, {
+      email: data.email?.toLowerCase().trim(),
+      name: data.name?.trim() || null,
+    });
+
+    if (!updated) {
+      return { success: false, message: "Email recipient not found" };
+    }
+
+    revalidatePath("/settings");
+    return {
+      success: true,
+      message: "Email updated successfully",
+      data: updated,
+    };
+  } catch (error) {
+    console.error("Error updating email recipient:", error);
+    return {
+      success: false,
+      message: "Failed to update email",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Toggle active status
+export async function toggleEmailRecipientActiveAction(id: number): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+    const updated = await toggleEmailRecipientActive(id);
+
+    if (!updated) {
+      return { success: false, message: "Email recipient not found" };
+    }
+
+    revalidatePath("/settings");
+    return {
+      success: true,
+      message: `Email ${updated.isActive ? "activated" : "deactivated"} successfully`,
+      data: updated,
+    };
+  } catch (error) {
+    console.error("Error toggling email recipient status:", error);
+    return {
+      success: false,
+      message: "Failed to toggle email status",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Delete email recipient
+export async function deleteEmailRecipientAction(id: number): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+    await deleteEmailRecipient(id);
+
+    revalidatePath("/settings");
+    return {
+      success: true,
+      message: "Email deleted successfully",
+    };
+  } catch (error) {
+    console.error("Error deleting email recipient:", error);
+    return {
+      success: false,
+      message: "Failed to delete email",
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { toast } from "sonner";
 import { sendTestEmailAction, sendSamplePropertiesEmailAction, updateCycleSchedules } from "@/lib/actions";
 import { CycleSchedule } from "@/lib/db/schema";
+import { EmailRecipientsManager } from "@/components/settings/email-recipients-manager";
 
 interface ScheduleFormData {
   week1Day: number;
@@ -145,6 +146,9 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
       />
 
       <div className="grid gap-6 max-w-3xl">
+        {/* Email Recipients Manager */}
+        <EmailRecipientsManager />
+
         {/* Test Email Card */}
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
