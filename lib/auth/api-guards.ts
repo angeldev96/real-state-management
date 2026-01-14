@@ -32,7 +32,7 @@ export async function requireAdminAPI(): Promise<{
   session: JWTUserPayload | null;
   error: NextResponse | null;
 }> {
-  const { session, error } = await requireAuthAPI(request);
+  const { session, error } = await requireAuthAPI();
   
   if (error) {
     return { session: null, error };
