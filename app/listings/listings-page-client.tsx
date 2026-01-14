@@ -8,6 +8,15 @@ import { ListingsTable } from "@/components/listings/listings-table";
 import { ListingFiltersBar } from "@/components/listings/listing-filters";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingForm } from "@/components/listings/listing-form";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { ListingWithRelations, ListingFilters, ListingFormData, PropertyType, Condition, Zoning, Feature } from "@/lib/types";
 import { createListing, updateListing } from "@/lib/actions";
 import { toast } from "sonner";
@@ -33,6 +42,7 @@ export function ListingsPageClient({
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [formOpen, setFormOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<ListingWithRelations | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<ListingFilters>({
     search: "",
     cycleGroup: null,
@@ -41,6 +51,7 @@ export function ListingsPageClient({
     zoningId: null,
     isActive: null,
   });
+  const itemsPerPage = 20;
 
   // Apply filters
   const filteredListings = useMemo(() => {
@@ -83,6 +94,23 @@ export function ListingsPageClient({
     });
   }, [allListings, filters]);
 
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
+  const paginatedListings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredListings.slice(startIndex, endIndex);
+  }, [filteredListings, currentPage, itemsPerPage]);
+
+  // Calculate current range for display
+  const startItem = filteredListings.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const endItem = Math.min(currentPage * itemsPerPage, filteredListings.length);
+
   const handleEdit = (listing: ListingWithRelations) => {
     setEditingListing(listing);
     setFormOpen(true);
@@ -123,7 +151,7 @@ export function ListingsPageClient({
     <div>
       <PageHeader
         title="All Listings"
-        description={`${filteredListings.length} properties in the system`}
+        description={`${startItem}-${endItem} of ${filteredListings.length} properties`}
         action={
           <div className="flex items-center gap-2">
             {/* View Toggle */}
@@ -166,17 +194,17 @@ export function ListingsPageClient({
       {/* Content */}
       {viewMode === "table" ? (
         <ListingsTable
-          listings={filteredListings}
+          listings={paginatedListings}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleActive={handleToggleActive}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-children">
-          {filteredListings.map((listing) => (
+          {paginatedListings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} onEdit={handleEdit} />
           ))}
-          {filteredListings.length === 0 && (
+          {paginatedListings.length === 0 && (
             <div className="col-span-full py-12 text-center">
               <p className="text-muted-foreground mb-4">No listings match your filters</p>
               <Button
@@ -196,6 +224,62 @@ export function ListingsPageClient({
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(pageNum)}
+                      isActive={currentPage === pageNum}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+
+              {/* Show ellipsis if there are more pages */}
+              {totalPages > 5 && currentPage < totalPages - 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
 
