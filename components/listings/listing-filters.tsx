@@ -12,19 +12,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ListingFilters } from "@/lib/types";
-import {
-  propertyTypes,
-  conditions,
-  zonings,
-} from "@/lib/mock-data";
+import { ListingFilters, PropertyType, Condition, Zoning } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface ListingFiltersProps {
   filters: ListingFilters;
   onChange: (filters: ListingFilters) => void;
+  propertyTypes: PropertyType[];
+  conditions: Condition[];
+  zonings: Zoning[];
 }
 
-export function ListingFiltersBar({ filters, onChange }: ListingFiltersProps) {
+export function ListingFiltersBar({ 
+  filters, 
+  onChange,
+  propertyTypes,
+  conditions,
+  zonings,
+}: ListingFiltersProps) {
   // Local state for immediate UI updates
   const [localSearch, setLocalSearch] = useState(filters.search);
 

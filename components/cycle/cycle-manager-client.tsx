@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CycleStatsCard } from "@/components/dashboard/cycle-stats-card";
 import { ListingCard } from "@/components/listings/listing-card";
 import { createListing, updateListing } from "@/lib/actions";
-import { ListingWithRelations, ListingFormData } from "@/lib/types";
+import { ListingWithRelations, ListingFormData, PropertyType, Condition, Zoning, Feature } from "@/lib/types";
 import type { CycleStats as DatabaseCycleStats } from "@/lib/db/queries";
 import { toast } from "sonner";
 
@@ -21,9 +21,20 @@ const ListingForm = lazy(() =>
 interface CycleManagerClientProps {
   allListings: ListingWithRelations[];
   cycleStats: DatabaseCycleStats[];
+  propertyTypes: PropertyType[];
+  conditions: Condition[];
+  zonings: Zoning[];
+  features: Feature[];
 }
 
-export function CycleManagerClient({ allListings, cycleStats }: CycleManagerClientProps) {
+export function CycleManagerClient({ 
+  allListings, 
+  cycleStats,
+  propertyTypes,
+  conditions,
+  zonings,
+  features,
+}: CycleManagerClientProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<ListingWithRelations | null>(null);
   const [activeTab, setActiveTab] = useState("1");
@@ -181,6 +192,10 @@ export function CycleManagerClient({ allListings, cycleStats }: CycleManagerClie
           onOpenChange={setFormOpen}
           listing={editingListing}
           onSubmit={handleFormSubmit}
+          propertyTypes={propertyTypes}
+          conditions={conditions}
+          zonings={zonings}
+          features={features}
         />
       </Suspense>
     </div>

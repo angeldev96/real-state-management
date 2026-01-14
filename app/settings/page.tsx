@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/layout/page-header";
-import { cycleSchedules } from "@/lib/mock-data";
 import { toast } from "sonner";
 
 interface ScheduleFormData {
@@ -18,10 +17,11 @@ interface ScheduleFormData {
 }
 
 export default function SettingsPage() {
+  // Default schedule values
   const [schedule, setSchedule] = useState<ScheduleFormData>({
-    week1Day: cycleSchedules.find((s) => s.weekNumber === 1)?.dayOfMonth || 1,
-    week2Day: cycleSchedules.find((s) => s.weekNumber === 2)?.dayOfMonth || 15,
-    week3Day: cycleSchedules.find((s) => s.weekNumber === 3)?.dayOfMonth || 25,
+    week1Day: 1,
+    week2Day: 15,
+    week3Day: 25,
   });
 
   const [hasChanges, setHasChanges] = useState(false);

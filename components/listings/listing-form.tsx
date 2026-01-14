@@ -22,13 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { ListingFormData, ListingWithRelations } from "@/lib/types";
-import {
-  propertyTypes,
-  conditions,
-  zonings,
-  features,
-} from "@/lib/mock-data";
+import { ListingFormData, ListingWithRelations, PropertyType, Condition, Zoning, Feature } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface ListingFormProps {
@@ -36,6 +30,10 @@ interface ListingFormProps {
   onOpenChange: (open: boolean) => void;
   listing?: ListingWithRelations | null;
   onSubmit: (data: ListingFormData) => void;
+  propertyTypes: PropertyType[];
+  conditions: Condition[];
+  zonings: Zoning[];
+  features: Feature[];
 }
 
 const defaultFormData: ListingFormData = {
@@ -59,6 +57,10 @@ export function ListingForm({
   onOpenChange,
   listing,
   onSubmit,
+  propertyTypes,
+  conditions,
+  zonings,
+  features,
 }: ListingFormProps) {
   const [formData, setFormData] = useState<ListingFormData>(defaultFormData);
   const isEditing = !!listing;

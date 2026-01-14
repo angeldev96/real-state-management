@@ -1,12 +1,23 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { CycleManagerClient } from "@/components/cycle/cycle-manager-client";
-import { getAllListingsWithRelations, getCycleStats } from "@/lib/db/queries";
+import { 
+  getAllListingsWithRelations, 
+  getCycleStats,
+  getPropertyTypes,
+  getConditions,
+  getZonings,
+  getFeatures,
+} from "@/lib/db/queries";
 
 export default async function CycleManagerPage() {
   // Server-side data fetching - no client-side computation
-  const [allListings, cycleStats] = await Promise.all([
+  const [allListings, cycleStats, propertyTypes, conditions, zonings, features] = await Promise.all([
     getAllListingsWithRelations(),
     getCycleStats(),
+    getPropertyTypes(),
+    getConditions(),
+    getZonings(),
+    getFeatures(),
   ]);
 
   return (
@@ -17,7 +28,14 @@ export default async function CycleManagerPage() {
       />
 
       {/* Client component for interactive parts */}
-      <CycleManagerClient allListings={allListings} cycleStats={cycleStats} />
+      <CycleManagerClient 
+        allListings={allListings} 
+        cycleStats={cycleStats}
+        propertyTypes={propertyTypes}
+        conditions={conditions}
+        zonings={zonings}
+        features={features}
+      />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ListingWithRelations } from "@/lib/types";
-import { formatPrice, formatSquareFootage } from "@/lib/mock-data";
+import { formatPrice, formatSquareFootage } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface ListingCardProps {

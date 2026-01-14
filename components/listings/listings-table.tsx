@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ListingWithRelations } from "@/lib/types";
-import { formatPrice, formatSquareFootage } from "@/lib/mock-data";
+import { formatPrice, formatSquareFootage } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface ListingsTableProps {
