@@ -2,11 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/index";
 import { users } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
+import { getSession } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 
-// GET - List all users
+// GET - List all users (ADMIN ONLY)
 export async function GET() {
   try {
+    // Require authentication and admin role
+    const session = await getSession();
+    
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const allUsers = await db
       .select()
       .from(users)
@@ -22,9 +40,26 @@ export async function GET() {
   }
 }
 
-// POST - Create new user
+// POST - Create new user (ADMIN ONLY)
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication and admin role
+    const session = await getSession();
+    
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { email, password, name, role } = body;
 

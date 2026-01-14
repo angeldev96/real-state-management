@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/index";
-import { users } from "@/lib/db/schema";
+import { users, sessions } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
+import { getSession } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 
 export async function POST(
@@ -9,6 +10,23 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require authentication and admin role
+    const session = await getSession();
+    
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const userId = parseInt(id);
 
@@ -52,9 +70,12 @@ export async function POST(
       .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, userId));
 
+    // Invalidate all user sessions for security
+    await db.delete(sessions).where(eq(sessions.userId, userId));
+
     return NextResponse.json({
       success: true,
-      message: "Password reset successfully",
+      message: "Password reset successfully. User must login again.",
     });
   } catch (error) {
     console.error("Error resetting password:", error);

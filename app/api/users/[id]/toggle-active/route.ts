@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/index";
-import { users } from "@/lib/db/schema";
+import { users, sessions } from "@/lib/db/schema";
+import { getSession } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 
 export async function POST(
@@ -8,12 +9,37 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require authentication and admin role
+    const session = await getSession();
+    
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const userId = parseInt(id);
 
     if (isNaN(userId)) {
       return NextResponse.json(
         { success: false, error: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
+    
+    // Prevent self-deactivation
+    if (session.userId === userId) {
+      return NextResponse.json(
+        { success: false, error: "Cannot deactivate your own account" },
         { status: 400 }
       );
     }
@@ -38,9 +64,14 @@ export async function POST(
       .set({ isActive: !user[0].isActive, updatedAt: new Date() })
       .where(eq(users.id, userId));
 
+    // If deactivating, invalidate all their sessions
+    if (user[0].isActive) {
+      await db.delete(sessions).where(eq(sessions.userId, userId));
+    }
+
     return NextResponse.json({
       success: true,
-      message: user[0].isActive ? "User deactivated" : "User activated",
+      message: user[0].isActive ? "User deactivated and logged out" : "User activated",
     });
   } catch (error) {
     console.error("Error toggling user status:", error);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/index";
 import { users, sessions } from "@/lib/db/schema";
+import { getSession } from "@/lib/auth/session";
 import { eq } from "drizzle-orm";
 
 export async function DELETE(
@@ -8,12 +9,37 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require authentication and admin role
+    const session = await getSession();
+    
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const userId = parseInt(id);
 
     if (isNaN(userId)) {
       return NextResponse.json(
         { success: false, error: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
+    
+    // Prevent self-deletion
+    if (session.userId === userId) {
+      return NextResponse.json(
+        { success: false, error: "Cannot delete your own account" },
         { status: 400 }
       );
     }
