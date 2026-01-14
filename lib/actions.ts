@@ -5,8 +5,8 @@ import { db } from "./db/index";
 import { listings, listingFeatures } from "./db/schema";
 import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
-import { sendTestEmail } from "./email";
-import { updateAllCycleSchedules as dbUpdateAllCycleSchedules } from "./db/queries";
+import { sendTestEmail, sendSamplePropertiesEmail } from "./email";
+import { updateAllCycleSchedules as dbUpdateAllCycleSchedules, getAllListingsWithRelations } from "./db/queries";
 
 export type ActionResponse = {
   success: boolean;
@@ -191,6 +191,37 @@ export async function sendTestEmailAction(email: string): Promise<ActionResponse
     return {
       success: false,
       message: "Failed to send test email",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function sendSamplePropertiesEmailAction(email: string): Promise<ActionResponse> {
+  try {
+    // Get first 5 listings
+    const allListings = await getAllListingsWithRelations();
+    const sampleListings = allListings.slice(0, 5);
+
+    if (sampleListings.length === 0) {
+      return { success: false, message: "No listings found to send" };
+    }
+
+    const result = await sendSamplePropertiesEmail(email, sampleListings);
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: "Failed to send sample properties email",
+        error: result.error ? String(result.error) : "Unknown error",
+      };
+    }
+
+    return { success: true, message: `Sample properties email sent to ${email} (${sampleListings.length} properties)` };
+  } catch (error) {
+    console.error("Error sending sample properties email:", error);
+    return {
+      success: false,
+      message: "Failed to send sample properties email",
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/layout/page-header";
 import { toast } from "sonner";
-import { sendTestEmailAction, updateCycleSchedules } from "@/lib/actions";
+import { sendTestEmailAction, sendSamplePropertiesEmailAction, updateCycleSchedules } from "@/lib/actions";
 import { CycleSchedule } from "@/lib/db/schema";
 
 interface ScheduleFormData {
@@ -45,6 +45,7 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isSendingSample, setIsSendingSample] = useState(false);
 
   const handleChange = (week: keyof ScheduleFormData, value: string) => {
     const numValue = parseInt(value) || 1;
@@ -97,6 +98,27 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
     }
   };
 
+  const handleSendSamplePropertiesEmail = async () => {
+    if (!testEmail || !testEmail.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSendingSample(true);
+    try {
+      const result = await sendSamplePropertiesEmailAction(testEmail);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to send sample properties email");
+    } finally {
+      setIsSendingSample(false);
+    }
+  };
+
   const getNextDate = (dayOfMonth: number): string => {
     const now = new Date();
     const year = now.getFullYear();
@@ -131,24 +153,38 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
               Test Email Configuration
             </CardTitle>
             <CardDescription>
-              Send a test email to verify your Resend configuration is working correctly.
+              Send test emails to verify your Resend configuration and preview the property email template.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
+            <div className="space-y-3">
               <Input
                 type="email"
                 placeholder="your-email@example.com"
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendTestEmail()}
               />
-              <Button
-                onClick={handleSendTestEmail}
-                disabled={isSendingTest || !testEmail}
-              >
-                {isSendingTest ? "Sending..." : "Send Test"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSendTestEmail}
+                  disabled={isSendingTest || !testEmail}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {isSendingTest ? "Sending..." : "Send Simple Test"}
+                </Button>
+                <Button
+                  onClick={handleSendSamplePropertiesEmail}
+                  disabled={isSendingSample || !testEmail}
+                  className="flex-1"
+                >
+                  {isSendingSample ? "Sending..." : "Send Properties Test"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                <strong>Simple Test:</strong> Basic configuration test email<br />
+                <strong>Properties Test:</strong> Sample email with 5 listings from your database
+              </p>
             </div>
           </CardContent>
         </Card>
