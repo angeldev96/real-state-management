@@ -85,14 +85,21 @@ export function MultiSelect({
                   className="mr-1 mb-0"
                 >
                   {label}
-                  <button
-                    type="button"
-                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer inline-flex items-center"
                     onClick={(e) => handleRemove(selected[index], e)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleRemove(selected[index], e as any);
+                      }
+                    }}
                   >
                     <X className="h-3 w-3" />
                     <span className="sr-only">Remove {label}</span>
-                  </button>
+                  </span>
                 </Badge>
               ))
             )}

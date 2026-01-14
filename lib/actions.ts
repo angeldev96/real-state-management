@@ -5,6 +5,7 @@ import { db } from "./db/index";
 import { listings, listingFeatures } from "./db/schema";
 import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
+import { requireAuth } from "./auth/require-auth";
 
 export type ActionResponse = {
   success: boolean;
@@ -15,6 +16,13 @@ export type ActionResponse = {
 
 export async function createListing(data: ListingFormData): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+    
     // Convert form data to database format
     const listingData = {
       address: data.address,
@@ -62,6 +70,13 @@ export async function createListing(data: ListingFormData): Promise<ActionRespon
 
 export async function updateListing(id: number, data: ListingFormData): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+    
     // Convert form data to database format
     const listingData = {
       address: data.address,
@@ -107,6 +122,13 @@ export async function updateListing(id: number, data: ListingFormData): Promise<
 
 export async function deleteListing(id: number): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+    
     await db.delete(listings).where(eq(listings.id, id));
     revalidatePath("/");
     return { success: true, message: "Listing deleted successfully", data: { id } };
@@ -122,6 +144,13 @@ export async function deleteListing(id: number): Promise<ActionResponse> {
 
 export async function toggleListingMarketStatus(id: number): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+    
     const listing = await db.select().from(listings).where(eq(listings.id, id)).limit(1);
 
     if (listing.length === 0) {
@@ -147,6 +176,13 @@ export async function toggleListingMarketStatus(id: number): Promise<ActionRespo
 
 export async function toggleListingActiveStatus(id: number): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+    
     const listing = await db.select().from(listings).where(eq(listings.id, id)).limit(1);
 
     if (listing.length === 0) {
