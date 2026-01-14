@@ -5,6 +5,8 @@ import { db } from "./db/index";
 import { listings, listingFeatures } from "./db/schema";
 import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
+import { sendTestEmail } from "./email";
+import { updateAllCycleSchedules as dbUpdateAllCycleSchedules } from "./db/queries";
 
 export type ActionResponse = {
   success: boolean;
@@ -165,6 +167,58 @@ export async function toggleListingActiveStatus(id: number): Promise<ActionRespo
     return {
       success: false,
       message: "Failed to update listing status",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Email Actions
+export async function sendTestEmailAction(email: string): Promise<ActionResponse> {
+  try {
+    const result = await sendTestEmail(email);
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: "Failed to send test email",
+        error: result.error ? String(result.error) : "Unknown error",
+      };
+    }
+
+    return { success: true, message: `Test email sent to ${email}` };
+  } catch (error) {
+    console.error("Error sending test email:", error);
+    return {
+      success: false,
+      message: "Failed to send test email",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Cycle Schedule Actions
+export interface CycleScheduleData {
+  week1Day: number;
+  week2Day: number;
+  week3Day: number;
+}
+
+export async function updateCycleSchedules(data: CycleScheduleData): Promise<ActionResponse> {
+  try {
+    const schedules = [
+      { weekNumber: 1 as const, dayOfMonth: data.week1Day, description: "Typically properties for start of month" },
+      { weekNumber: 2 as const, dayOfMonth: data.week2Day, description: "Mid-month property collection" },
+      { weekNumber: 3 as const, dayOfMonth: data.week3Day, description: "End of month offerings" },
+    ];
+
+    await dbUpdateAllCycleSchedules(schedules);
+    revalidatePath("/settings");
+    return { success: true, message: "Schedule updated successfully" };
+  } catch (error) {
+    console.error("Error updating cycle schedules:", error);
+    return {
+      success: false,
+      message: "Failed to update schedule",
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

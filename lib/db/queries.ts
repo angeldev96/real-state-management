@@ -140,6 +140,32 @@ export async function getCycleSchedules() {
   return db.select().from(cycleSchedules);
 }
 
+export async function updateCycleSchedule(weekNumber: 1 | 2 | 3, dayOfMonth: number, description?: string) {
+  // Check if schedule exists
+  const existing = await db
+    .select()
+    .from(cycleSchedules)
+    .where(eq(cycleSchedules.weekNumber, weekNumber))
+    .limit(1);
+
+  if (existing.length > 0) {
+    // Update existing
+    await db
+      .update(cycleSchedules)
+      .set({ dayOfMonth, description: description || null })
+      .where(eq(cycleSchedules.weekNumber, weekNumber));
+  } else {
+    // Insert new
+    await db.insert(cycleSchedules).values({ weekNumber, dayOfMonth, description: description || null });
+  }
+}
+
+export async function updateAllCycleSchedules(schedules: { weekNumber: 1 | 2 | 3; dayOfMonth: number; description?: string }[]) {
+  for (const schedule of schedules) {
+    await updateCycleSchedule(schedule.weekNumber, schedule.dayOfMonth, schedule.description);
+  }
+}
+
 export async function getCycleStats(): Promise<CycleStats[]> {
   const schedules = await getCycleSchedules();
 
