@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { AUTH_CONFIG } from "@/lib/auth/config";
 
-// Middleware runs on Edge Runtime, so we use jose directly
+// Proxy runs on Node.js runtime
 import { jwtVerify } from "jose";
 
 async function verifyToken(token: string): Promise<boolean> {
@@ -15,7 +15,7 @@ async function verifyToken(token: string): Promise<boolean> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip public paths and static files
