@@ -1,45 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Save, Calendar, Info, RotateCcw, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import { toast } from "sonner";
-import { sendTestEmailAction, sendSamplePropertiesEmailAction, updateCycleSchedules } from "@/lib/actions";
-import { CycleSchedule } from "@/lib/db/schema";
+import { sendTestEmailAction, sendSamplePropertiesEmailAction, updateCycleRotationConfig } from "@/lib/actions";
+import type { CycleRotationConfig, CycleRotationState } from "@/lib/db/schema";
 import { EmailRecipientsManager } from "@/components/settings/email-recipients-manager";
 
-interface ScheduleFormData {
-  week1Day: number;
-  week2Day: number;
-  week3Day: number;
+interface RotationFormData {
+  dayOfWeek: number;
+  sendTime: string;
 }
 
 interface SettingsClientProps {
-  initialSchedules: CycleSchedule[];
+  rotationConfig: CycleRotationConfig;
+  rotationState: CycleRotationState;
 }
 
-const DEFAULT_SCHEDULES: ScheduleFormData = {
-  week1Day: 1,
-  week2Day: 15,
-  week3Day: 25,
+const DEFAULT_ROTATION: RotationFormData = {
+  dayOfWeek: 3,
+  sendTime: "00:00",
 };
 
-export function SettingsClient({ initialSchedules }: SettingsClientProps) {
-  // Initialize from database or use defaults
-  const [schedule, setSchedule] = useState<ScheduleFormData>(() => {
-    if (initialSchedules.length === 3) {
+const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+export function SettingsClient({ rotationConfig, rotationState }: SettingsClientProps) {
+  const [rotation, setRotation] = useState<RotationFormData>(() => {
+    if (rotationConfig) {
+      const hour = String(rotationConfig.sendHour).padStart(2, "0");
+      const minute = String(rotationConfig.sendMinute).padStart(2, "0");
       return {
-        week1Day: initialSchedules.find((s) => s.weekNumber === 1)?.dayOfMonth ?? 1,
-        week2Day: initialSchedules.find((s) => s.weekNumber === 2)?.dayOfMonth ?? 15,
-        week3Day: initialSchedules.find((s) => s.weekNumber === 3)?.dayOfMonth ?? 25,
+        dayOfWeek: rotationConfig.dayOfWeek,
+        sendTime: `${hour}:${minute}`,
       };
     }
-    return DEFAULT_SCHEDULES;
+    return DEFAULT_ROTATION;
   });
 
   const [hasChanges, setHasChanges] = useState(false);
@@ -48,17 +50,28 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [isSendingSample, setIsSendingSample] = useState(false);
 
-  const handleChange = (week: keyof ScheduleFormData, value: string) => {
-    const numValue = parseInt(value) || 1;
-    const clampedValue = Math.max(1, Math.min(31, numValue));
-    setSchedule((prev) => ({ ...prev, [week]: clampedValue }));
+  const handleChange = (field: keyof RotationFormData, value: string) => {
+    if (field === "dayOfWeek") {
+      const numValue = parseInt(value) || 0;
+      const clampedValue = Math.max(0, Math.min(6, numValue));
+      setRotation((prev) => ({ ...prev, dayOfWeek: clampedValue }));
+      setHasChanges(true);
+      return;
+    }
+
+    setRotation((prev) => ({ ...prev, sendTime: value }));
     setHasChanges(true);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const result = await updateCycleSchedules(schedule);
+      const [hourStr, minuteStr] = (rotation.sendTime || "00:00").split(":");
+      const result = await updateCycleRotationConfig({
+        dayOfWeek: rotation.dayOfWeek,
+        sendHour: parseInt(hourStr || "0", 10),
+        sendMinute: parseInt(minuteStr || "0", 10),
+      });
       if (result.success) {
         toast.success(result.message);
         setHasChanges(false);
@@ -73,7 +86,7 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
   };
 
   const handleReset = () => {
-    setSchedule(DEFAULT_SCHEDULES);
+    setRotation(DEFAULT_ROTATION);
     setHasChanges(true);
   };
 
@@ -120,17 +133,10 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
     }
   };
 
-  const getNextDate = (dayOfMonth: number): string => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-
-    let date = new Date(year, month, dayOfMonth);
-    if (date < now) {
-      date = new Date(year, month + 1, dayOfMonth);
-    }
-
-    return date.toLocaleDateString("en-US", {
+  const getNextRunLabel = (): string => {
+    if (!rotationState?.nextRunAt) return "Not scheduled";
+    const next = new Date(rotationState.nextRunAt);
+    return next.toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -198,104 +204,76 @@ export function SettingsClient({ initialSchedules }: SettingsClientProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-serif">
               <Calendar className="w-5 h-5 text-primary" />
-              Email Cycle Schedule
+              Cycle Rotation Schedule
             </CardTitle>
             <CardDescription>
-              Set the day of the month when each cycle&apos;s email blast is triggered.
-              The system automatically sends the email at midnight on the specified day.
+              Configure the weekly rotation. Each Wednesday (or selected day), the system sends
+              the next cycle: 1 → 2 → 3 → 1.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Week 1 */}
             <div className="grid gap-4 sm:grid-cols-2 items-start p-4 rounded-lg bg-muted/30 border border-border">
               <div className="space-y-2">
-                <Label htmlFor="week1" className="text-base font-semibold">
-                  Week 1 Cycle
+                <Label htmlFor="cycle-day" className="text-base font-semibold">
+                  Cycle Send Day
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Typically properties for start of month
+                  Cycles rotate weekly in order: 1 → 2 → 3 → 1.
                 </p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="week1"
-                    type="number"
-                    min={1}
-                    max={31}
-                    value={schedule.week1Day}
-                    onChange={(e) => handleChange("week1Day", e.target.value)}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    day of month
-                  </span>
-                </div>
+                <Select
+                  value={String(rotation.dayOfWeek)}
+                  onValueChange={(value) => handleChange("dayOfWeek", value)}
+                >
+                  <SelectTrigger id="cycle-day">
+                    <SelectValue placeholder="Select a day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAY_LABELS.map((label, index) => (
+                      <SelectItem key={label} value={String(index)}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-primary">
-                  Next: {getNextDate(schedule.week1Day)}
+                  Next: {getNextRunLabel()}
                 </p>
               </div>
             </div>
 
-            {/* Week 2 */}
             <div className="grid gap-4 sm:grid-cols-2 items-start p-4 rounded-lg bg-muted/30 border border-border">
               <div className="space-y-2">
-                <Label htmlFor="week2" className="text-base font-semibold">
-                  Week 2 Cycle
+                <Label className="text-base font-semibold">
+                  Send Time
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Mid-month property collection
+                  Time is based on New York time.
                 </p>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="week2"
-                    type="number"
-                    min={1}
-                    max={31}
-                    value={schedule.week2Day}
-                    onChange={(e) => handleChange("week2Day", e.target.value)}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    day of month
-                  </span>
-                </div>
-                <p className="text-xs text-primary">
-                  Next: {getNextDate(schedule.week2Day)}
-                </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="time"
+                  value={rotation.sendTime ?? "00:00"}
+                  onChange={(e) => handleChange("sendTime", e.target.value)}
+                  className="w-32"
+                />
               </div>
             </div>
 
-            {/* Week 3 */}
-            <div className="grid gap-4 sm:grid-cols-2 items-start p-4 rounded-lg bg-muted/30 border border-border">
-              <div className="space-y-2">
-                <Label htmlFor="week3" className="text-base font-semibold">
-                  Week 3 Cycle
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  End of month offerings
-                </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="p-3 rounded-lg bg-background/50 border border-border">
+                <p className="text-xs text-muted-foreground">Current Cycle</p>
+                <p className="text-lg font-semibold">Cycle {rotationState?.currentCycle ?? 1}</p>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="week3"
-                    type="number"
-                    min={1}
-                    max={31}
-                    value={schedule.week3Day}
-                    onChange={(e) => handleChange("week3Day", e.target.value)}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    day of month
-                  </span>
-                </div>
-                <p className="text-xs text-primary">
-                  Next: {getNextDate(schedule.week3Day)}
-                </p>
+              <div className="p-3 rounded-lg bg-background/50 border border-border">
+                <p className="text-xs text-muted-foreground">Next Send</p>
+                <p className="text-sm font-medium">{getNextRunLabel()}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-background/50 border border-border">
+                <p className="text-xs text-muted-foreground">Rotation</p>
+                <p className="text-sm font-medium">1 → 2 → 3 → 1</p>
               </div>
             </div>
 

@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
 import { requireAuth } from "./auth/require-auth";
 import { sendTestEmail, sendSamplePropertiesEmail } from "./email";
-import { updateAllCycleSchedules as dbUpdateAllCycleSchedules, getAllListingsWithRelations, createEmailRecipient, getAllEmailRecipients, getEmailRecipientByEmail, updateEmailRecipient, deleteEmailRecipient, toggleEmailRecipientActive } from "./db/queries";
+import { getAllListingsWithRelations, createEmailRecipient, getAllEmailRecipients, getEmailRecipientByEmail, updateEmailRecipient, deleteEmailRecipient, toggleEmailRecipientActive, upsertCycleRotationConfig, recalculateCycleRotationState } from "./db/queries";
 import { getSession } from "./auth/session";
 
 export type ActionResponse = {
@@ -264,33 +264,43 @@ export async function sendSamplePropertiesEmailAction(email: string): Promise<Ac
   }
 }
 
-// Cycle Schedule Actions
-export interface CycleScheduleData {
-  week1Day: number;
-  week2Day: number;
-  week3Day: number;
+// Cycle Rotation Actions
+export interface CycleRotationFormData {
+  dayOfWeek: number;
+  sendHour: number;
+  sendMinute: number;
 }
 
-export async function updateCycleSchedules(data: CycleScheduleData): Promise<ActionResponse> {
+export async function updateCycleRotationConfig(data: CycleRotationFormData): Promise<ActionResponse> {
   try {
     const session = await getSession();
     if (!session) {
       return { success: false, message: "Unauthorized" };
     }
-    const schedules = [
-      { weekNumber: 1 as const, dayOfMonth: data.week1Day, description: "Typically properties for start of month" },
-      { weekNumber: 2 as const, dayOfMonth: data.week2Day, description: "Mid-month property collection" },
-      { weekNumber: 3 as const, dayOfMonth: data.week3Day, description: "End of month offerings" },
-    ];
 
-    await dbUpdateAllCycleSchedules(schedules);
+    if (data.dayOfWeek < 0 || data.dayOfWeek > 6) {
+      return { success: false, message: "Invalid day of week" };
+    }
+
+    if (data.sendHour < 0 || data.sendHour > 23 || data.sendMinute < 0 || data.sendMinute > 59) {
+      return { success: false, message: "Invalid send time" };
+    }
+
+    const config = await upsertCycleRotationConfig({
+      dayOfWeek: data.dayOfWeek,
+      sendHour: data.sendHour,
+      sendMinute: data.sendMinute,
+    });
+
+    await recalculateCycleRotationState(config);
     revalidatePath("/settings");
-    return { success: true, message: "Schedule updated successfully" };
+
+    return { success: true, message: "Cycle rotation updated successfully" };
   } catch (error) {
-    console.error("Error updating cycle schedules:", error);
+    console.error("Error updating cycle rotation:", error);
     return {
       success: false,
-      message: "Failed to update schedule",
+      message: "Failed to update cycle rotation",
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

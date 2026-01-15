@@ -64,6 +64,37 @@ export const cycleSchedules = sqliteTable("cycle_schedules", {
 });
 
 // =============================================================================
+// CYCLE ROTATION (Weekly Cycle Engine)
+// =============================================================================
+
+export const cycleRotationConfig = sqliteTable("cycle_rotation_config", {
+  id: integer("id").primaryKey(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday ... 6=Saturday
+  sendHour: integer("send_hour").notNull().default(0),
+  sendMinute: integer("send_minute").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const cycleRotationState = sqliteTable("cycle_rotation_state", {
+  id: integer("id").primaryKey(),
+  currentCycle: integer("current_cycle").notNull().default(1), // 1, 2, 3
+  lastRunAt: integer("last_run_at", { mode: "timestamp" }),
+  nextRunAt: integer("next_run_at", { mode: "timestamp" }),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const cycleRuns = sqliteTable("cycle_runs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  cycleNumber: integer("cycle_number").notNull(),
+  scheduledFor: integer("scheduled_for", { mode: "timestamp" }).notNull(),
+  sentAt: integer("sent_at", { mode: "timestamp" }),
+  status: text("status", { enum: ["pending", "sent", "failed"] }).notNull().default("pending"),
+  error: text("error"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// =============================================================================
 // EMAIL RECIPIENTS (Email Distribution List)
 // =============================================================================
 
@@ -128,6 +159,12 @@ export type Condition = typeof conditions.$inferSelect;
 export type Zoning = typeof zonings.$inferSelect;
 export type Feature = typeof features.$inferSelect;
 export type CycleSchedule = typeof cycleSchedules.$inferSelect;
+export type CycleRotationConfig = typeof cycleRotationConfig.$inferSelect;
+export type NewCycleRotationConfig = typeof cycleRotationConfig.$inferInsert;
+export type CycleRotationState = typeof cycleRotationState.$inferSelect;
+export type NewCycleRotationState = typeof cycleRotationState.$inferInsert;
+export type CycleRun = typeof cycleRuns.$inferSelect;
+export type NewCycleRun = typeof cycleRuns.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;

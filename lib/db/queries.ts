@@ -1,7 +1,8 @@
 import { db } from "./index";
-import { listings, propertyTypes, conditions, zonings, features, listingFeatures, cycleSchedules, emailRecipients } from "./schema";
+import { listings, propertyTypes, conditions, zonings, features, listingFeatures, cycleSchedules, emailRecipients, cycleRotationConfig, cycleRotationState, cycleRuns } from "./schema";
 import { eq, and, inArray } from "drizzle-orm";
-import type { NewEmailRecipient, EmailRecipient } from "./schema";
+import type { NewEmailRecipient, EmailRecipient, CycleRotationConfig, CycleRotationState, NewCycleRotationConfig, NewCycleRun } from "./schema";
+import { DateTime } from "luxon";
 
 // Types for our enriched data - matches the original ListingWithRelations type
 export interface ListingWithRelations {
@@ -139,6 +140,156 @@ export async function getListingsByCycle(cycleGroup: number): Promise<ListingWit
 
 export async function getCycleSchedules() {
   return db.select().from(cycleSchedules);
+}
+
+// =============================================================================
+// CYCLE ROTATION (Weekly Cycles)
+// =============================================================================
+
+function getNextWeeklyRunAt(config: CycleRotationConfig, fromDate = new Date()): Date {
+  const now = DateTime.fromJSDate(fromDate, { zone: "America/New_York" });
+  const scheduledBase = now.set({
+    hour: config.sendHour,
+    minute: config.sendMinute,
+    second: 0,
+    millisecond: 0,
+  });
+
+  const currentDow = scheduledBase.weekday % 7; // Sunday -> 0, Monday -> 1, ...
+  let deltaDays = (config.dayOfWeek - currentDow + 7) % 7;
+
+  if (deltaDays === 0 && scheduledBase <= now) {
+    deltaDays = 7;
+  }
+
+  const next = scheduledBase.plus({ days: deltaDays });
+  return next.toUTC().toJSDate();
+}
+
+export async function getCycleRotationConfig(): Promise<CycleRotationConfig | undefined> {
+  const [config] = await db.select().from(cycleRotationConfig).limit(1);
+  return config;
+}
+
+export async function getOrCreateCycleRotationConfig(): Promise<CycleRotationConfig> {
+  const existing = await getCycleRotationConfig();
+  if (existing) return existing;
+
+  const [created] = await db
+    .insert(cycleRotationConfig)
+    .values({
+      id: 1,
+      dayOfWeek: 3,
+      sendHour: 0,
+      sendMinute: 0,
+    })
+    .returning();
+  return created;
+}
+
+export async function upsertCycleRotationConfig(config: NewCycleRotationConfig): Promise<CycleRotationConfig> {
+  const existing = await getCycleRotationConfig();
+
+  if (existing) {
+    const [updated] = await db
+      .update(cycleRotationConfig)
+      .set({
+        dayOfWeek: config.dayOfWeek,
+        sendHour: config.sendHour ?? existing.sendHour,
+        sendMinute: config.sendMinute ?? existing.sendMinute,
+        updatedAt: new Date(),
+      })
+      .where(eq(cycleRotationConfig.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(cycleRotationConfig)
+    .values({
+      id: 1,
+      dayOfWeek: config.dayOfWeek,
+      sendHour: config.sendHour ?? 0,
+      sendMinute: config.sendMinute ?? 0,
+    })
+    .returning();
+  return created;
+}
+
+export async function getCycleRotationState(): Promise<CycleRotationState | undefined> {
+  const [state] = await db.select().from(cycleRotationState).limit(1);
+  return state;
+}
+
+export async function ensureCycleRotationState(config: CycleRotationConfig): Promise<CycleRotationState> {
+  const existing = await getCycleRotationState();
+  if (existing) return existing;
+
+  const nextRunAt = getNextWeeklyRunAt(config);
+  const [created] = await db
+    .insert(cycleRotationState)
+    .values({
+      id: 1,
+      currentCycle: 1,
+      nextRunAt,
+    })
+    .returning();
+  return created;
+}
+
+export async function recalculateCycleRotationState(
+  config: CycleRotationConfig,
+  fromDate = new Date()
+): Promise<CycleRotationState> {
+  const state = await ensureCycleRotationState(config);
+  const nextRunAt = getNextWeeklyRunAt(config, fromDate);
+
+  const [updated] = await db
+    .update(cycleRotationState)
+    .set({
+      nextRunAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(cycleRotationState.id, state.id))
+    .returning();
+
+  return updated;
+}
+
+export async function createCycleRun(data: NewCycleRun) {
+  const [created] = await db.insert(cycleRuns).values(data).returning();
+  return created;
+}
+
+export async function advanceCycleRotation(runAt = new Date()): Promise<CycleRotationState> {
+  const config = await getCycleRotationConfig();
+  if (!config) {
+    throw new Error("Cycle rotation config not found");
+  }
+
+  const state = await ensureCycleRotationState(config);
+  const nextCycle = state.currentCycle % 3 + 1;
+  const nextRunAt = getNextWeeklyRunAt(config, runAt);
+
+  await createCycleRun({
+    cycleNumber: state.currentCycle,
+    scheduledFor: state.nextRunAt ?? runAt,
+    sentAt: runAt,
+    status: "sent",
+  });
+
+  const [updated] = await db
+    .update(cycleRotationState)
+    .set({
+      currentCycle: nextCycle,
+      lastRunAt: runAt,
+      nextRunAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(cycleRotationState.id, state.id))
+    .returning();
+
+  return updated;
 }
 
 export async function updateCycleSchedule(weekNumber: 1 | 2 | 3, dayOfMonth: number, description?: string) {

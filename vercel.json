@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cycle/rotate",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

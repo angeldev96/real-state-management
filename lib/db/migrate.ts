@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { migrate as migrateSqlite } from "drizzle-orm/better-sqlite3/migrator";
 import { migrate as migrateLibsql } from "drizzle-orm/libsql/migrator";
 import Database from "better-sqlite3";
@@ -5,6 +6,8 @@ import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
 import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from "./schema";
+
+dotenv.config({ path: ".env.local" });
 
 // Check if we're using Turso (production) or local SQLite (development)
 const isTurso = process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN;
