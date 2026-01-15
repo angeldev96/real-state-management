@@ -17,7 +17,7 @@ const getJwtSecret = (): string => {
 export const AUTH_CONFIG = {
   // JWT Settings
   jwtSecret: getJwtSecret(),
-  accessTokenExpiry: "15m", // 15 minutes
+  accessTokenExpiry: "7d", // 7 days
   refreshTokenExpiry: "7d", // 7 days
   
   // Cookie settings
