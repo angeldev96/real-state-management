@@ -36,21 +36,25 @@ export const sessions = sqliteTable("sessions", {
 export const propertyTypes = sqliteTable("property_types", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
 export const conditions = sqliteTable("conditions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
 export const zonings = sqliteTable("zonings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   code: text("code").notNull().unique(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
 export const features = sqliteTable("features", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
 });
 
 // =============================================================================

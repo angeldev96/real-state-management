@@ -23,10 +23,10 @@ export interface ListingWithRelations {
   createdAt: Date;
   updatedAt: Date;
   // Relations
-  propertyType: { id: number; name: string } | null;
-  condition: { id: number; name: string } | null;
-  zoning: { id: number; code: string } | null;
-  features: Array<{ id: number; name: string }>;
+  propertyType: { id: number; name: string; isActive: boolean } | null;
+  condition: { id: number; name: string; isActive: boolean } | null;
+  zoning: { id: number; code: string; isActive: boolean } | null;
+  features: Array<{ id: number; name: string; isActive: boolean }>;
 }
 
 export interface CycleStats {
@@ -356,6 +356,98 @@ export async function getZonings() {
 
 export async function getFeatures() {
   return db.select().from(features);
+}
+
+// =============================================================================
+// LOOKUP MANAGEMENT (CRUD)
+// =============================================================================
+
+// Property Types
+export async function createPropertyType(name: string) {
+  const [created] = await db.insert(propertyTypes).values({ name }).returning();
+  return created;
+}
+
+export async function updatePropertyType(id: number, name: string) {
+  const [updated] = await db.update(propertyTypes).set({ name }).where(eq(propertyTypes.id, id)).returning();
+  return updated;
+}
+
+export async function togglePropertyType(id: number) {
+  const [item] = await db.select().from(propertyTypes).where(eq(propertyTypes.id, id)).limit(1);
+  if (!item) return null;
+  const [updated] = await db.update(propertyTypes).set({ isActive: !item.isActive }).where(eq(propertyTypes.id, id)).returning();
+  return updated;
+}
+
+export async function deletePropertyType(id: number) {
+  await db.delete(propertyTypes).where(eq(propertyTypes.id, id));
+}
+
+// Conditions
+export async function createCondition(name: string) {
+  const [created] = await db.insert(conditions).values({ name }).returning();
+  return created;
+}
+
+export async function updateCondition(id: number, name: string) {
+  const [updated] = await db.update(conditions).set({ name }).where(eq(conditions.id, id)).returning();
+  return updated;
+}
+
+export async function toggleCondition(id: number) {
+  const [item] = await db.select().from(conditions).where(eq(conditions.id, id)).limit(1);
+  if (!item) return null;
+  const [updated] = await db.update(conditions).set({ isActive: !item.isActive }).where(eq(conditions.id, id)).returning();
+  return updated;
+}
+
+export async function deleteCondition(id: number) {
+  await db.delete(conditions).where(eq(conditions.id, id));
+}
+
+// Zonings
+export async function createZoning(code: string) {
+  const [created] = await db.insert(zonings).values({ code }).returning();
+  return created;
+}
+
+export async function updateZoning(id: number, code: string) {
+  const [updated] = await db.update(zonings).set({ code }).where(eq(zonings.id, id)).returning();
+  return updated;
+}
+
+export async function toggleZoning(id: number) {
+  const [item] = await db.select().from(zonings).where(eq(zonings.id, id)).limit(1);
+  if (!item) return null;
+  const [updated] = await db.update(zonings).set({ isActive: !item.isActive }).where(eq(zonings.id, id)).returning();
+  return updated;
+}
+
+export async function deleteZoning(id: number) {
+  await db.delete(zonings).where(eq(zonings.id, id));
+}
+
+// Features
+export async function createFeature(name: string) {
+  const [created] = await db.insert(features).values({ name }).returning();
+  return created;
+}
+
+export async function updateFeature(id: number, name: string) {
+  const [updated] = await db.update(features).set({ name }).where(eq(features.id, id)).returning();
+  return updated;
+}
+
+export async function toggleFeature(id: number) {
+  const [item] = await db.select().from(features).where(eq(features.id, id)).limit(1);
+  if (!item) return null;
+  const [updated] = await db.update(features).set({ isActive: !item.isActive }).where(eq(features.id, id)).returning();
+  return updated;
+}
+
+export async function deleteFeature(id: number) {
+  await db.delete(features).where(eq(features.id, id));
 }
 
 export async function getListingById(id: number): Promise<ListingWithRelations | null> {

@@ -93,10 +93,22 @@ export function ListingForm({
     onOpenChange(false);
   };
 
-  const featureOptions = features.map((f) => ({
-    value: f.id.toString(),
-    label: f.name,
-  }));
+  const featureOptions = features
+    .filter((f) => f.isActive || formData.featureIds.includes(f.id))
+    .map((f) => ({
+      value: f.id.toString(),
+      label: f.name + (!f.isActive ? " (Archived)" : ""),
+    }));
+
+  const filteredPropertyTypes = propertyTypes.filter(
+    (t) => t.isActive || formData.propertyTypeId === t.id.toString()
+  );
+  const filteredConditions = conditions.filter(
+    (c) => c.isActive || formData.conditionId === c.id.toString()
+  );
+  const filteredZonings = zonings.filter(
+    (z) => z.isActive || formData.zoningId === z.id.toString()
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -227,9 +239,9 @@ export function ListingForm({
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {propertyTypes.map((type) => (
+                    {filteredPropertyTypes.map((type) => (
                       <SelectItem key={type.id} value={type.id.toString()}>
-                        {type.name}
+                        {type.name} {!type.isActive && "(Archived)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -247,12 +259,12 @@ export function ListingForm({
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    {conditions.map((condition) => (
+                    {filteredConditions.map((condition) => (
                       <SelectItem
                         key={condition.id}
                         value={condition.id.toString()}
                       >
-                        {condition.name}
+                        {condition.name} {!condition.isActive && "(Archived)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -270,9 +282,9 @@ export function ListingForm({
                     <SelectValue placeholder="Select zoning" />
                   </SelectTrigger>
                   <SelectContent>
-                    {zonings.map((zone) => (
+                    {filteredZonings.map((zone) => (
                       <SelectItem key={zone.id} value={zone.id.toString()}>
-                        {zone.code}
+                        {zone.code} {!zone.isActive && "(Archived)"}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -7,7 +7,33 @@ import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
 import { requireAuth } from "./auth/require-auth";
 import { sendTestEmail, sendSamplePropertiesEmail } from "./email";
-import { getAllListingsWithRelations, createEmailRecipient, getAllEmailRecipients, getEmailRecipientByEmail, updateEmailRecipient, deleteEmailRecipient, toggleEmailRecipientActive, upsertCycleRotationConfig, recalculateCycleRotationState } from "./db/queries";
+import { 
+  getAllListingsWithRelations, 
+  createEmailRecipient, 
+  getAllEmailRecipients, 
+  getEmailRecipientByEmail, 
+  updateEmailRecipient, 
+  deleteEmailRecipient, 
+  toggleEmailRecipientActive, 
+  upsertCycleRotationConfig, 
+  recalculateCycleRotationState,
+  createPropertyType,
+  updatePropertyType,
+  togglePropertyType,
+  deletePropertyType,
+  createCondition,
+  updateCondition,
+  toggleCondition,
+  deleteCondition,
+  createZoning,
+  updateZoning,
+  toggleZoning,
+  deleteZoning,
+  createFeature,
+  updateFeature,
+  toggleFeature,
+  deleteFeature
+} from "./db/queries";
 import { getSession } from "./auth/session";
 
 export type ActionResponse = {
@@ -482,3 +508,84 @@ export async function deleteEmailRecipientAction(id: number): Promise<ActionResp
     };
   }
 }
+// =============================================================================
+// CLASSIFICATION ACTIONS (Lookup Tables)
+// =============================================================================
+
+// Common wrapper for lookup actions to reduce boilerplate
+async function handleLookupAction(
+  actionFn: () => Promise<any>,
+  successMsg: string,
+  errorMsg: string
+): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, message: "Unauthorized" };
+
+    const result = await actionFn();
+    if (!result && successMsg.includes("Toggle")) return { success: false, message: "Item not found" };
+
+    revalidatePath("/settings");
+    revalidatePath("/listings"); // Revalidate listings as they use these lookups
+    return { success: true, message: successMsg, data: result };
+  } catch (error) {
+    console.error(`Error in lookup action:`, error);
+    return {
+      success: false,
+      message: errorMsg,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Property Type Actions
+export const addPropertyTypeAction = async (name: string) => 
+  handleLookupAction(() => createPropertyType(name), "Property type added", "Failed to add property type");
+
+export const updatePropertyTypeAction = async (id: number, name: string) => 
+  handleLookupAction(() => updatePropertyType(id, name), "Property type updated", "Failed to update property type");
+
+export const togglePropertyTypeAction = async (id: number) => 
+  handleLookupAction(() => togglePropertyType(id), "Property type status toggled", "Failed to toggle status");
+
+export const deletePropertyTypeAction = async (id: number) => 
+  handleLookupAction(() => deletePropertyType(id), "Property type deleted", "Failed to delete property type");
+
+// Condition Actions
+export const addConditionAction = async (name: string) => 
+  handleLookupAction(() => createCondition(name), "Condition added", "Failed to add condition");
+
+export const updateConditionAction = async (id: number, name: string) => 
+  handleLookupAction(() => updateCondition(id, name), "Condition updated", "Failed to update condition");
+
+export const toggleConditionAction = async (id: number) => 
+  handleLookupAction(() => toggleCondition(id), "Condition status toggled", "Failed to toggle status");
+
+export const deleteConditionAction = async (id: number) => 
+  handleLookupAction(() => deleteCondition(id), "Condition deleted", "Failed to delete condition");
+
+// Zoning Actions
+export const addZoningAction = async (code: string) => 
+  handleLookupAction(() => createZoning(code), "Zoning added", "Failed to add zoning");
+
+export const updateZoningAction = async (id: number, code: string) => 
+  handleLookupAction(() => updateZoning(id, code), "Zoning updated", "Failed to update zoning");
+
+export const toggleZoningAction = async (id: number) => 
+  handleLookupAction(() => toggleZoning(id), "Zoning status toggled", "Failed to toggle status");
+
+export const deleteZoningAction = async (id: number) => 
+  handleLookupAction(() => deleteZoning(id), "Zoning deleted", "Failed to delete zoning");
+
+// Feature Actions
+export const addFeatureAction = async (name: string) => 
+  handleLookupAction(() => createFeature(name), "Feature added", "Failed to add feature");
+
+export const updateFeatureAction = async (id: number, name: string) => 
+  handleLookupAction(() => updateFeature(id, name), "Feature updated", "Failed to update feature");
+
+export const toggleFeatureAction = async (id: number) => 
+  handleLookupAction(() => toggleFeature(id), "Feature status toggled", "Failed to toggle status");
+
+export const deleteFeatureAction = async (id: number) => 
+  handleLookupAction(() => deleteFeature(id), "Feature deleted", "Failed to delete feature");

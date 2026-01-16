@@ -29,6 +29,13 @@
       "when": 1768435587800,
       "tag": "0003_brief_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1768592835212,
+      "tag": "0004_huge_maginty",
+      "breakpoints": true
     }
   ]
 }

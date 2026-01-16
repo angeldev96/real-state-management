@@ -5,21 +5,25 @@
 export interface PropertyType {
   id: number;
   name: string;
+  isActive: boolean;
 }
 
 export interface Condition {
   id: number;
   name: string;
+  isActive: boolean;
 }
 
 export interface Zoning {
   id: number;
   code: string;
+  isActive: boolean;
 }
 
 export interface Feature {
   id: number;
   name: string;
+  isActive: boolean;
 }
 
 // =============================================================================
