@@ -5,7 +5,7 @@ import { Plus, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { ListingsTable } from "@/components/listings/listings-table";
-import { ListingFiltersBar } from "@/components/listings/listing-filters";
+
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingForm } from "@/components/listings/listing-form";
 import {
@@ -182,14 +182,6 @@ export function ListingsPageClient({
         }
       />
 
-      {/* Filters */}
-      <ListingFiltersBar 
-        filters={filters} 
-        onChange={setFilters}
-        propertyTypes={propertyTypes}
-        conditions={conditions}
-        zonings={zonings}
-      />
 
       {/* Content */}
       {viewMode === "table" ? (
@@ -198,6 +190,11 @@ export function ListingsPageClient({
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleActive={handleToggleActive}
+          filters={filters}
+          onFilterChange={setFilters}
+          propertyTypes={propertyTypes}
+          conditions={conditions}
+          zonings={zonings}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-children">
