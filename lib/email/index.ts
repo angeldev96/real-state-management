@@ -40,30 +40,32 @@ export async function sendTestEmail(to: string) {
     <!DOCTYPE html>
     <html>
       <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #2E7D32; color: white; padding: 20px; text-align: center; }
-          .content { padding: 20px; background: #f5f5f5; }
-          .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
-        </style>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Eretz Realty - Test Email</title>
       </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Eretz Realty</h1>
-            <p>Test Email</p>
-          </div>
-          <div class="content">
-            <p>Hello!</p>
-            <p>This is a test email from Eretz Realty.</p>
-            <p>If you received this, your email configuration is working correctly!</p>
-            <p><strong>Test Date:</strong> ${new Date().toLocaleString()}</p>
-          </div>
-          <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} Eretz Realty. All rights reserved.</p>
-          </div>
-        </div>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #ffffff;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; border-collapse: collapse;">
+          <tr>
+            <td style="background-color: #2E7D32; color: #ffffff; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Eretz Realty</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">Test Email</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #f5f5f5;">
+              <p style="margin: 0 0 15px 0;">Hello!</p>
+              <p style="margin: 0 0 15px 0;">This is a test email from Eretz Realty.</p>
+              <p style="margin: 0 0 15px 0;">If you received this, your email configuration is working correctly!</p>
+              <p style="margin: 0;"><strong>Test Date:</strong> ${new Date().toLocaleString()}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="text-align: center; padding: 20px; font-size: 12px; color: #666666;">
+              <p style="margin: 0;">&copy; ${new Date().getFullYear()} Eretz Realty. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
       </body>
     </html>
   `;
@@ -121,6 +123,10 @@ function generatePropertyEmailHtml(
 
 // Shared helper for Excel-like table format
 function generateListingsTableHtml(listings: ListingWithRelations[], title: string): string {
+  const cellStyle = "padding: 8px; font-size: 13px; color: #333333; vertical-align: middle; border: 1px solid #cccccc;";
+  const headerStyle = "background-color: #f0f0f0; font-weight: bold; padding: 10px; font-size: 13px; border: 1px solid #cccccc; color: #333333; text-align: center;";
+  const titleStyle = "text-align: center; color: #2E7D32; font-size: 20px; margin-bottom: 20px; font-family: Arial, sans-serif;";
+  
   const rows = listings
     .map((listing, index) => {
       const isNew = listing.onMarket;
@@ -132,23 +138,21 @@ function generateListingsTableHtml(listings: ListingWithRelations[], title: stri
       }
       const notes = notesParts.join(", ");
 
-      const rowStyle = "border-bottom: 1px solid #e0e0e0;";
-      const cellStyle = "padding: 8px; font-size: 13px; color: #333; vertical-align: middle;";
-      const centerStyle = "text-align: center;";
+      const bgColor = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
       
       return `
-        <tr style="${rowStyle} background: ${index % 2 === 0 ? '#ffffff' : '#f9f9f9'};">
-          <td style="${cellStyle} ${centerStyle} font-weight: bold;">
+        <tr bgcolor="${bgColor}">
+          <td align="center" style="${cellStyle} font-weight: bold;">
             ${isNew ? '<span style="color: #2E7D32;">New</span> ' : ''}${listing.id}
           </td>
-          <td style="${cellStyle}">${listing.locationDescription || '-'}</td>
-          <td style="${cellStyle} ${centerStyle}">${listing.dimensions || '-'}</td>
-          <td style="${cellStyle} ${centerStyle}">${listing.rooms || '-'}</td>
-          <td style="${cellStyle} ${centerStyle}">${listing.squareFootage ? listing.squareFootage.toLocaleString() : '-'}</td>
-          <td style="${cellStyle}">${listing.condition?.name || '-'}</td>
-          <td style="${cellStyle}">${listing.propertyType?.name || '-'}</td>
-          <td style="${cellStyle}">${notes}</td>
-          <td style="${cellStyle} ${centerStyle} font-weight: bold; color: #000;">
+          <td align="left" style="${cellStyle}">${listing.locationDescription || '-'}</td>
+          <td align="center" style="${cellStyle}">${listing.dimensions || '-'}</td>
+          <td align="center" style="${cellStyle}">${listing.rooms || '-'}</td>
+          <td align="center" style="${cellStyle}">${listing.squareFootage ? listing.squareFootage.toLocaleString() : '-'}</td>
+          <td align="left" style="${cellStyle}">${listing.condition?.name || '-'}</td>
+          <td align="left" style="${cellStyle}">${listing.propertyType?.name || '-'}</td>
+          <td align="left" style="${cellStyle}">${notes}</td>
+          <td align="center" style="${cellStyle} font-weight: bold; color: #000000;">
             ${listing.price ? listing.price.toLocaleString() : '-'}
           </td>
         </tr>
@@ -160,36 +164,26 @@ function generateListingsTableHtml(listings: ListingWithRelations[], title: stri
     <!DOCTYPE html>
     <html>
       <head>
-        <style>
-          body { font-family: Calibri, Arial, sans-serif; margin: 0; padding: 20px; background: #ffffff; }
-          table { border-collapse: collapse; width: 100%; border: 1px solid #ccc; }
-          th { 
-            background: #f0f0f0; 
-            font-weight: bold; 
-            padding: 10px; 
-            font-size: 13px; 
-            border-bottom: 2px solid #ccc; 
-            text-align: center;
-            color: #333; 
-          }
-          .text-left { text-align: left; }
-        </style>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
       </head>
-      <body>
-        <div style="font-family: Calibri, Arial, sans-serif; width: 100%; overflow-x: auto;">
-          <h2 style="text-align: center; color: #2E7D32; font-size: 20px; margin-bottom: 20px;">${title}</h2>
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="min-width: 800px;">
+      <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #ffffff;">
+        <div style="width: 100%; max-width: 1000px; margin: 0 auto;">
+          <h2 style="${titleStyle}">${title}</h2>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #cccccc; min-width: 800px;">
             <thead>
-              <tr>
-                <th style="width: 80px;">#</th>
-                <th class="text-left">Location</th>
-                <th>Dimensions</th>
-                <th>Rooms</th>
-                <th>Square footage</th>
-                <th class="text-left">Condition</th>
-                <th class="text-left">Other</th>
-                <th class="text-left">Notes</th>
-                <th>Price</th>
+              <tr bgcolor="#f0f0f0">
+                <th style="${headerStyle} width: 60px;">#</th>
+                <th style="${headerStyle} text-align: left;">Location</th>
+                <th style="${headerStyle}">Dimensions</th>
+                <th style="${headerStyle}">Rooms</th>
+                <th style="${headerStyle}">Sq. Ft.</th>
+                <th style="${headerStyle} text-align: left;">Condition</th>
+                <th style="${headerStyle} text-align: left;">Type</th>
+                <th style="${headerStyle} text-align: left;">Notes</th>
+                <th style="${headerStyle}">Price</th>
               </tr>
             </thead>
             <tbody>
@@ -197,8 +191,9 @@ function generateListingsTableHtml(listings: ListingWithRelations[], title: stri
             </tbody>
           </table>
           
-          <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
-            <p>Eretz Realty</p>
+          <div style="margin-top: 30px; font-size: 12px; color: #666666; text-align: center; border-top: 1px solid #eeeeee; padding-top: 20px;">
+            <p style="margin: 0; font-weight: bold;">Eretz Realty</p>
+            <p style="margin: 5px 0 0 0;">This is an automated property update.</p>
           </div>
         </div>
       </body>
