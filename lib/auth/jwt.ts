@@ -32,6 +32,7 @@ export async function createRefreshToken(userId: number): Promise<string> {
   return new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setJti(Math.random().toString(36).substring(7) + Date.now().toString())
     .setExpirationTime(AUTH_CONFIG.refreshTokenExpiry)
     .sign(getSecretKey());
 }

@@ -21,6 +21,7 @@ import { ListingWithRelations, ListingFilters, ListingFormData, PropertyType, Co
 import { createListing, updateListing } from "@/lib/actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { filterListings } from "@/lib/listings";
 
 type ViewMode = "table" | "grid";
 
@@ -55,43 +56,7 @@ export function ListingsPageClient({
 
   // Apply filters
   const filteredListings = useMemo(() => {
-    return allListings.filter((listing) => {
-      // Search filter
-      if (
-        filters.search &&
-        !listing.address.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !listing.locationDescription?.toLowerCase().includes(filters.search.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Cycle filter
-      if (filters.cycleGroup !== null && listing.cycleGroup !== filters.cycleGroup) {
-        return false;
-      }
-
-      // Property type filter
-      if (filters.propertyTypeId !== null && listing.propertyTypeId !== filters.propertyTypeId) {
-        return false;
-      }
-
-      // Condition filter
-      if (filters.conditionId !== null && listing.conditionId !== filters.conditionId) {
-        return false;
-      }
-
-      // Zoning filter
-      if (filters.zoningId !== null && listing.zoningId !== filters.zoningId) {
-        return false;
-      }
-
-      // Active status filter
-      if (filters.isActive !== null && listing.isActive !== filters.isActive) {
-        return false;
-      }
-
-      return true;
-    });
+    return filterListings(allListings, filters);
   }, [allListings, filters]);
 
   // Reset to page 1 when filters change
