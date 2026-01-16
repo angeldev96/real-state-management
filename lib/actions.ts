@@ -238,6 +238,12 @@ export async function toggleListingActiveStatus(id: number): Promise<ActionRespo
 // Email Actions
 export async function sendTestEmailAction(email: string): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+
     const result = await sendTestEmail(email);
 
     if (!result.success) {
@@ -261,6 +267,12 @@ export async function sendTestEmailAction(email: string): Promise<ActionResponse
 
 export async function sendSamplePropertiesEmailAction(email: string): Promise<ActionResponse> {
   try {
+    // Require authentication
+    const session = await requireAuth();
+    if (!session) {
+      return { success: false, message: "Unauthorized", error: "Authentication required" };
+    }
+
     // Get first 5 listings
     const allListings = await getAllListingsWithRelations();
     const sampleListings = allListings.slice(0, 5);
