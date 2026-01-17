@@ -24,7 +24,7 @@ export function ListingCard({ listing, onEdit }: ListingCardProps) {
       {/* NEW Badge - Only show when onMarket is true */}
       {listing.onMarket && (
         <div className="absolute top-3 right-3 z-10">
-          <Badge className="bg-destructive text-destructive-foreground font-semibold shadow-md animate-pulse">
+          <Badge className="bg-destructive text-white font-semibold shadow-md animate-pulse">
             NEW LISTING
           </Badge>
         </div>

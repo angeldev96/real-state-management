@@ -472,7 +472,7 @@ export function ListingsTable({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {listing.onMarket && (
-                          <Badge className="bg-destructive hover:bg-destructive text-destructive-foreground text-[10px] py-0 px-1 font-bold">
+                          <Badge className="bg-destructive hover:bg-destructive text-white text-[10px] py-0 px-1 font-bold">
                             NEW
                           </Badge>
                         )}
