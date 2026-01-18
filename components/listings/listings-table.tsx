@@ -55,7 +55,7 @@ interface ListingsTableProps {
   zonings: Zoning[];
 }
 
-type SortField = "address" | "price" | "cycleGroup" | "rooms" | "squareFootage";
+type SortField = "id" | "address" | "price" | "cycleGroup" | "rooms" | "squareFootage" | "dimensions";
 type SortDirection = "asc" | "desc";
 
 export function ListingsTable({
@@ -69,10 +69,13 @@ export function ListingsTable({
   conditions,
   zonings,
 }: ListingsTableProps) {
-  const [sortField, setSortField] = useState<SortField>("address");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortField, setSortField] = useState<SortField>("id");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  
+  // Default visible columns to match email design
+  // Order: #, Location, Dimensions, Rooms, Sq. Ft., Condition, Other, Notes, Price
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(["price", "type", "cycle", "status"])
+    new Set(["id", "location", "dimensions", "rooms", "size", "condition", "other", "notes", "price"])
   );
 
   const toggleColumn = (column: string) => {
@@ -99,6 +102,10 @@ export function ListingsTable({
     let bValue: number | string | null = null;
 
     switch (sortField) {
+      case "id":
+        aValue = a.id;
+        bValue = b.id;
+        break;
       case "address":
         aValue = a.address.toLowerCase();
         bValue = b.address.toLowerCase();
@@ -118,6 +125,10 @@ export function ListingsTable({
       case "squareFootage":
         aValue = a.squareFootage ?? 0;
         bValue = b.squareFootage ?? 0;
+        break;
+      case "dimensions":
+        aValue = a.dimensions || "";
+        bValue = b.dimensions || "";
         break;
     }
 
@@ -147,7 +158,10 @@ export function ListingsTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          Showing {sortedListings.length} properties
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
@@ -159,18 +173,60 @@ export function ListingsTable({
             <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem
-              checked={visibleColumns.has("price")}
-              onCheckedChange={() => toggleColumn("price")}
+              checked={visibleColumns.has("id")}
+              onCheckedChange={() => toggleColumn("id")}
             >
-              Price
+              # (ID)
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("location")}
+              onCheckedChange={() => toggleColumn("location")}
+            >
+              Location
+            </DropdownMenuCheckboxItem>
+             <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("dimensions")}
+              onCheckedChange={() => toggleColumn("dimensions")}
+            >
+              Dimensions
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("rooms")}
+              onCheckedChange={() => toggleColumn("rooms")}
+            >
+              Rooms
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={visibleColumns.has("size")}
               onCheckedChange={() => toggleColumn("size")}
             >
-              Size (sq ft)
+              Sq. Ft.
+            </DropdownMenuCheckboxItem>
+             <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("condition")}
+              onCheckedChange={() => toggleColumn("condition")}
+            >
+              Condition
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("other")}
+              onCheckedChange={() => toggleColumn("other")}
+            >
+              Other (Features)
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("notes")}
+              onCheckedChange={() => toggleColumn("notes")}
+            >
+              Notes (Zoning)
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={visibleColumns.has("price")}
+              onCheckedChange={() => toggleColumn("price")}
+            >
+              Price
+            </DropdownMenuCheckboxItem>
+             <DropdownMenuCheckboxItem
               checked={visibleColumns.has("type")}
               onCheckedChange={() => toggleColumn("type")}
             >
@@ -182,23 +238,11 @@ export function ListingsTable({
             >
               Cycle Week
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.has("zoning")}
-              onCheckedChange={() => toggleColumn("zoning")}
-            >
-              Zoning
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.has("condition")}
-              onCheckedChange={() => toggleColumn("condition")}
-            >
-              Condition
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
+             <DropdownMenuCheckboxItem
               checked={visibleColumns.has("status")}
               onCheckedChange={() => toggleColumn("status")}
             >
-              Active Status
+              Status
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -208,49 +252,148 @@ export function ListingsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 border-b-0">
-              <TableHead className="w-[300px]">
-                <SortButton field="address">Address</SortButton>
-              </TableHead>
+              {/* # (ID) */}
+              {visibleColumns.has("id") && (
+                <TableHead className="w-[80px]">
+                   <SortButton field="id">#</SortButton>
+                </TableHead>
+              )}
+              
+              {/* Location */}
+              {visibleColumns.has("location") && (
+                <TableHead className="w-[200px]">
+                   <SortButton field="address">Location</SortButton>
+                </TableHead>
+              )}
+              
+              {/* Dimensions */}
+              {visibleColumns.has("dimensions") && (
+                <TableHead className="text-center">
+                   <SortButton field="dimensions">Dimensions</SortButton>
+                </TableHead>
+              )}
+
+              {/* Rooms */}
+              {visibleColumns.has("rooms") && (
+                <TableHead className="text-center">
+                  <SortButton field="rooms">Rooms</SortButton>
+                </TableHead>
+              )}
+
+              {/* Sq. Ft. */}
+              {visibleColumns.has("size") && (
+                <TableHead className="text-center">
+                  <SortButton field="squareFootage">Sq. Ft.</SortButton>
+                </TableHead>
+              )}
+
+              {/* Condition */}
+              {visibleColumns.has("condition") && (
+                <TableHead className="text-center font-bold">Condition</TableHead>
+              )}
+
+              {/* Other (Features) */}
+              {visibleColumns.has("other") && (
+                <TableHead className="text-center font-bold">Other</TableHead>
+              )}
+
+              {/* Notes (Zoning) */}
+              {visibleColumns.has("notes") && (
+                <TableHead className="text-center font-bold">Notes</TableHead>
+              )}
+
+              {/* Price */}
               {visibleColumns.has("price") && (
-                <TableHead>
+                <TableHead className="text-right">
                   <SortButton field="price">Price</SortButton>
                 </TableHead>
               )}
-              {visibleColumns.has("size") && (
-                <TableHead>
-                  <SortButton field="squareFootage">Size</SortButton>
-                </TableHead>
-              )}
+              
+              {/* Extra Columns (Default Hidden but toggleable) */}
               {visibleColumns.has("type") && <TableHead className="font-bold">Type</TableHead>}
               {visibleColumns.has("cycle") && (
                 <TableHead className="font-bold">
                   <SortButton field="cycleGroup">Cycle</SortButton>
                 </TableHead>
               )}
-              {visibleColumns.has("zoning") && <TableHead className="font-bold">Zoning</TableHead>}
-              {visibleColumns.has("condition") && (
-                <TableHead className="font-bold">Condition</TableHead>
-              )}
               {visibleColumns.has("status") && <TableHead className="font-bold">Status</TableHead>}
-              <TableHead className="w-[70px]"></TableHead>
+              
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
+            
             {/* Filters Row */}
             <TableRow className="bg-muted/30 border-t-0 -mt-2">
-              <TableCell className="py-2">
-                <div className="relative">
-                  <Input
-                    placeholder="Filter address..."
+               {visibleColumns.has("id") && <TableCell className="py-2"></TableCell>}
+               {visibleColumns.has("location") && (
+                <TableCell className="py-2">
+                   <Input
+                    placeholder="Filter..."
                     value={filters.search}
                     onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
-                    className="h-8 text-xs bg-background"
+                    className="h-8 text-xs bg-background w-full"
                   />
-                </div>
-              </TableCell>
-              {visibleColumns.has("price") && <TableCell className="py-2"></TableCell>}
-              {visibleColumns.has("size") && <TableCell className="py-2"></TableCell>}
-              {visibleColumns.has("type") && (
+                </TableCell>
+               )}
+               {visibleColumns.has("dimensions") && <TableCell className="py-2"></TableCell>}
+               {visibleColumns.has("rooms") && <TableCell className="py-2"></TableCell>}
+               {visibleColumns.has("size") && <TableCell className="py-2"></TableCell>}
+               {visibleColumns.has("condition") && (
+                 <TableCell className="py-2">
+                   <Select
+                    value={filters.conditionId?.toString() || "all"}
+                    onValueChange={(value) =>
+                      onFilterChange({
+                        ...filters,
+                        conditionId: value === "all" ? null : parseInt(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs bg-background w-full">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {conditions.map((condition) => (
+                        <SelectItem key={condition.id} value={condition.id.toString()}>
+                          {condition.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                 </TableCell>
+               )}
+               {visibleColumns.has("other") && <TableCell className="py-2"></TableCell>}
+               {visibleColumns.has("notes") && (
+                 <TableCell className="py-2">
+                    <Select
+                    value={filters.zoningId?.toString() || "all"}
+                    onValueChange={(value) =>
+                      onFilterChange({
+                        ...filters,
+                        zoningId: value === "all" ? null : parseInt(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs bg-background w-full">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {zonings.map((zone) => (
+                        <SelectItem key={zone.id} value={zone.id.toString()}>
+                          {zone.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                 </TableCell>
+               )}
+               {visibleColumns.has("price") && <TableCell className="py-2"></TableCell>}
+
+               {/* Extra Filters */}
+               {visibleColumns.has("type") && (
                 <TableCell className="py-2">
-                  <Select
+                   <Select
                     value={filters.propertyTypeId?.toString() || "all"}
                     onValueChange={(value) =>
                       onFilterChange({
@@ -260,10 +403,10 @@ export function ListingsTable({
                     }
                   >
                     <SelectTrigger className="h-8 text-xs bg-background">
-                      <SelectValue placeholder="All Types" />
+                      <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
                       {propertyTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
                           {type.name}
@@ -272,10 +415,10 @@ export function ListingsTable({
                     </SelectContent>
                   </Select>
                 </TableCell>
-              )}
-              {visibleColumns.has("cycle") && (
+               )}
+               {visibleColumns.has("cycle") && (
                 <TableCell className="py-2">
-                  <Select
+                   <Select
                     value={filters.cycleGroup?.toString() || "all"}
                     onValueChange={(value) =>
                       onFilterChange({
@@ -285,70 +428,20 @@ export function ListingsTable({
                     }
                   >
                     <SelectTrigger className="h-8 text-xs bg-background">
-                      <SelectValue placeholder="All Cycles" />
+                      <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Cycles</SelectItem>
-                      <SelectItem value="1">Week 1</SelectItem>
-                      <SelectItem value="2">Week 2</SelectItem>
-                      <SelectItem value="3">Week 3</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>
-              )}
-              {visibleColumns.has("zoning") && (
-                <TableCell className="py-2">
-                  <Select
-                    value={filters.zoningId?.toString() || "all"}
-                    onValueChange={(value) =>
-                      onFilterChange({
-                        ...filters,
-                        zoningId: value === "all" ? null : parseInt(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-xs bg-background">
-                      <SelectValue placeholder="All Zones" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Zones</SelectItem>
-                      {zonings.map((zone) => (
-                        <SelectItem key={zone.id} value={zone.id.toString()}>
-                          {zone.code}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-              )}
-              {visibleColumns.has("condition") && (
-                <TableCell className="py-2">
-                  <Select
-                    value={filters.conditionId?.toString() || "all"}
-                    onValueChange={(value) =>
-                      onFilterChange({
-                        ...filters,
-                        conditionId: value === "all" ? null : parseInt(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-xs bg-background">
-                      <SelectValue placeholder="All Conditions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Conditions</SelectItem>
-                      {conditions.map((condition) => (
-                        <SelectItem key={condition.id} value={condition.id.toString()}>
-                          {condition.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-              )}
-              {visibleColumns.has("status") && (
-                <TableCell className="py-2">
-                  <Select
+               )}
+               {visibleColumns.has("status") && (
+                 <TableCell className="py-2">
+                    <Select
                     value={
                       filters.isActive === null
                         ? "all"
@@ -364,24 +457,25 @@ export function ListingsTable({
                     }
                   >
                     <SelectTrigger className="h-8 text-xs bg-background">
-                      <SelectValue placeholder="All Status" />
+                      <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
-                </TableCell>
-              )}
-              <TableCell className="py-2"></TableCell>
+                 </TableCell>
+               )}
+
+               <TableCell className="py-2"></TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedListings.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={visibleColumns.size + 2}
+                  colSpan={visibleColumns.size + 1}
                   className="h-24 text-center"
                 >
                   <p className="text-muted-foreground">No listings found</p>
@@ -392,102 +486,112 @@ export function ListingsTable({
                 <TableRow
                   key={listing.id}
                   className={cn("group transition-colors", !listing.isActive && "bg-muted/20")}
-                  style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <TableCell>
-                    <div className="max-w-[280px]">
-                      <p className="font-semibold truncate">{listing.address}</p>
-                      {listing.locationDescription && (
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {listing.locationDescription}
-                        </p>
-                      )}
-                    </div>
-                  </TableCell>
-                  {visibleColumns.has("price") && (
-                    <TableCell className="font-semibold text-primary">
-                      {formatPrice(listing.price)}
+                  {/* # (ID) */}
+                  {visibleColumns.has("id") && (
+                    <TableCell className="font-medium text-xs">
+                       {listing.onMarket ? (
+                          <span className="font-bold text-emerald-700">New {listing.id}</span>
+                       ) : (
+                          listing.id
+                       )}
                     </TableCell>
                   )}
-                  {visibleColumns.has("size") && (
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {formatSquareFootage(listing.squareFootage)}
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("type") && (
+
+                  {/* Location */}
+                  {visibleColumns.has("location") && (
                     <TableCell>
-                      {listing.propertyType ? (
-                        <Badge variant="outline" className="text-[10px] py-0 bg-muted/30">
-                          {listing.propertyType.name}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("cycle") && (
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "font-bold text-[10px] py-0",
-                          listing.cycleGroup === 1 && "border-chart-1 text-chart-1 bg-chart-1/5",
-                          listing.cycleGroup === 2 && "border-chart-2 text-chart-2 bg-chart-2/5",
-                          listing.cycleGroup === 3 && "border-chart-3 text-chart-3 bg-chart-3/5"
+                      <div className="max-w-[200px]">
+                        <p className="font-semibold truncate text-sm">{listing.address}</p>
+                        {listing.locationDescription && (
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {listing.locationDescription}
+                          </p>
                         )}
-                      >
-                        Week {listing.cycleGroup}
-                      </Badge>
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("zoning") && (
-                    <TableCell className="whitespace-nowrap">
-                      {listing.zoning ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] h-5 px-1 font-normal opacity-70"
-                        >
-                          {listing.zoning.code}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("condition") && (
-                    <TableCell className="whitespace-nowrap">
-                      {listing.condition ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] h-5 px-1 font-normal opacity-70"
-                        >
-                          {listing.condition.name}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("status") && (
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {listing.onMarket && (
-                          <Badge className="bg-destructive hover:bg-destructive text-white text-[10px] py-0 px-1 font-bold">
-                            NEW
-                          </Badge>
-                        )}
-                        <Badge
-                          variant={listing.isActive ? "default" : "secondary"}
-                          className={cn(
-                            "text-[10px] py-0 px-1 font-bold",
-                            listing.isActive ? "bg-emerald-600" : "opacity-60"
-                          )}
-                        >
-                          {listing.isActive ? "Active" : "Archived"}
-                        </Badge>
                       </div>
                     </TableCell>
                   )}
+
+                  {/* Dimensions */}
+                  {visibleColumns.has("dimensions") && (
+                    <TableCell className="text-center text-xs">
+                      {listing.dimensions || "-"}
+                    </TableCell>
+                  )}
+
+                  {/* Rooms */}
+                  {visibleColumns.has("rooms") && (
+                    <TableCell className="text-center text-xs">
+                      {listing.rooms || "-"}
+                    </TableCell>
+                  )}
+
+                  {/* Sq. Ft. */}
+                  {visibleColumns.has("size") && (
+                    <TableCell className="text-center whitespace-nowrap text-muted-foreground text-xs">
+                      {listing.squareFootage ? listing.squareFootage.toLocaleString() : "-"}
+                    </TableCell>
+                  )}
+
+                  {/* Condition */}
+                  {visibleColumns.has("condition") && (
+                    <TableCell className="text-center whitespace-nowrap">
+                       {listing.condition ? (
+                        <span className="text-xs text-muted-foreground">{listing.condition.name}</span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* Other (Features) */}
+                  {visibleColumns.has("other") && (
+                    <TableCell className="text-center">
+                       {listing.features && listing.features.length > 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            {listing.features.map(f => f.name).join(", ")}
+                          </span>
+                       ) : (
+                          <span className="text-muted-foreground">-</span>
+                       )}
+                    </TableCell>
+                  )}
+
+                  {/* Notes (Zoning) */}
+                  {visibleColumns.has("notes") && (
+                    <TableCell className="text-center whitespace-nowrap">
+                       {listing.zoning ? (
+                        <span className="text-xs text-muted-foreground">{listing.zoning.code}</span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  )}
+                  
+                  {/* Price */}
+                  {visibleColumns.has("price") && (
+                    <TableCell className="font-bold text-sm text-right">
+                      {listing.price ? listing.price.toLocaleString() : "-"}
+                    </TableCell>
+                  )}
+                  
+                  {/* Extra Columns */}
+                  {visibleColumns.has("type") && (
+                    <TableCell>
+                       {listing.propertyType?.name || "-"}
+                    </TableCell>
+                  )}
+                   {visibleColumns.has("cycle") && (
+                    <TableCell>
+                       Week {listing.cycleGroup}
+                    </TableCell>
+                  )}
+                   {visibleColumns.has("status") && (
+                    <TableCell>
+                       {listing.isActive ? "Active" : "Archived"}
+                    </TableCell>
+                  )}
+
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -521,8 +625,7 @@ export function ListingsTable({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => onDelete?.(listing)}
-                        >
+                          onClick={() => onDelete?.(listing)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>

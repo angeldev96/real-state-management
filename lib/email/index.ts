@@ -89,9 +89,9 @@ export async function sendSamplePropertiesEmail(to: string, listings: ListingWit
   });
 }
 
+
 function generateSamplePropertiesEmailHtml(listings: ListingWithRelations[]): string {
-  // Use the shared table generator
-  return generateListingsTableHtml(listings.slice(0, 5), "Featured Properties");
+  return generateListingsGridHtml(listings, "Featured Properties");
 }
 
 export interface PropertyEmailOptions {
@@ -113,52 +113,118 @@ export async function sendPropertyEmail(
   });
 }
 
-function generatePropertyEmailHtml(
+export function generatePropertyEmailHtml(
   cycleNumber: 1 | 2 | 3,
   listings: ListingWithRelations[],
   cycleName: string
 ): string {
-  return generateListingsTableHtml(listings, cycleName);
+  return generateListingsGridHtml(listings, cycleName);
 }
 
-// Shared helper for Excel-like table format
-function generateListingsTableHtml(listings: ListingWithRelations[], title: string): string {
-  const cellStyle = "padding: 8px; font-size: 13px; color: #333333; vertical-align: middle; border: 1px solid #cccccc;";
-  const headerStyle = "background-color: #f0f0f0; font-weight: bold; padding: 10px; font-size: 13px; border: 1px solid #cccccc; color: #333333; text-align: center;";
-  const titleStyle = "text-align: center; color: #2E7D32; font-size: 20px; margin-bottom: 20px; font-family: Arial, sans-serif;";
+// Helper to group listings
+function groupListingsByType(listings: ListingWithRelations[]) {
+  const groups: Record<string, ListingWithRelations[]> = {};
   
-  const rows = listings
-    .map((listing, index) => {
-      const isNew = listing.onMarket;
-      // Notes: Zoning + Features
-      const notesParts = [];
-      if (listing.zoning) notesParts.push(listing.zoning.code);
-      if (listing.features && listing.features.length > 0) {
-        notesParts.push(listing.features.map(f => f.name).join(", "));
-      }
-      const notes = notesParts.join(", ");
+  // Sort listings first to ensure consistent order (optional, but good)
+  // We can sort by ID or price if needed. For now, rely on input order.
+  
+  listings.forEach(listing => {
+    const typeName = listing.propertyType?.name || "Other";
+    if (!groups[typeName]) {
+      groups[typeName] = [];
+    }
+    groups[typeName].push(listing);
+  });
+  
+  return groups;
+}
 
-      const bgColor = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
+// New Generator ensuring Black & White minimalist design
+function generateListingsGridHtml(listings: ListingWithRelations[], title: string): string {
+  const groups = groupListingsByType(listings);
+  const sortedTypes = Object.keys(groups).sort(); // Alphabetical sort of types
+  
+  let contentHtml = "";
+
+  const tableHeader = `
+    <tr style="border-bottom: 2px solid #ccc;">
+      <th style="padding: 10px; text-align: left; font-weight: bold; width: 60px;">#</th>
+      <th style="padding: 10px; text-align: left; font-weight: bold;">Location</th>
+      <th style="padding: 10px; text-align: center; font-weight: bold;">Dimensions</th>
+      <th style="padding: 10px; text-align: center; font-weight: bold;">Rooms</th>
+      <th style="padding: 10px; text-align: center; font-weight: bold;">Square footage</th>
+      <th style="padding: 10px; text-align: center; font-weight: bold;">Condition</th>
+      <th style="padding: 10px; text-align: center; font-weight: bold;">Other</th>
+      <th style="padding: 10px; text-align: center; font-weight: bold;">Notes</th>
+      <th style="padding: 10px; text-align: right; font-weight: bold;">Price</th>
+    </tr>
+  `;
+
+  for (const type of sortedTypes) {
+    const typeListings = groups[type];
+    
+    // Group Header
+    contentHtml += `
+      <tr>
+        <td colspan="9" style="padding: 20px 0 10px 0; text-align: center; font-family: 'Times New Roman', serif; font-size: 24px; font-weight: bold; border-bottom: 1px solid #777;">
+          ${type}
+        </td>
+      </tr>
+      ${tableHeader}
+    `;
+
+    // Rows
+    typeListings.forEach((listing, index) => {
+      // Logic for "New" label
+      const isNew = listing.onMarket; // Using onMarket as proxy for 'Active/New' marketing status
+      const idDisplay = isNew ? `<strong>New ${listing.id}</strong>` : `${listing.id}`;
       
-      return `
-        <tr bgcolor="${bgColor}">
-          <td align="center" style="${cellStyle} font-weight: bold;">
-            ${isNew ? '<span style="color: #2E7D32;">New</span> ' : ''}${listing.id}
-          </td>
-          <td align="left" style="${cellStyle}">${listing.locationDescription || '-'}</td>
-          <td align="center" style="${cellStyle}">${listing.dimensions || '-'}</td>
-          <td align="center" style="${cellStyle}">${listing.rooms || '-'}</td>
-          <td align="center" style="${cellStyle}">${listing.squareFootage ? listing.squareFootage.toLocaleString() : '-'}</td>
-          <td align="left" style="${cellStyle}">${listing.condition?.name || '-'}</td>
-          <td align="left" style="${cellStyle}">${listing.propertyType?.name || '-'}</td>
-          <td align="left" style="${cellStyle}">${notes}</td>
-          <td align="center" style="${cellStyle} font-weight: bold; color: #000000;">
-            ${listing.price ? listing.price.toLocaleString() : '-'}
-          </td>
+      // Formatting values
+      const location = listing.locationDescription || listing.address || '-';
+      const dimensions = listing.dimensions || '-';
+      const rooms = listing.rooms || '-';
+      const sqFt = listing.squareFootage ? listing.squareFootage.toLocaleString() : '-';
+      const condition = listing.condition?.name || '-';
+      
+      // MAPPING: Other -> Features
+      const other = listing.features && listing.features.length > 0 
+        ? listing.features.map(f => f.name).join(", ") 
+        : '-';
+      
+      // MAPPING: Notes -> Zoning
+      const notes = listing.zoning?.code || '-';
+      
+      // MAPPING: Price
+      // Format: 3.2M or 2.750M or regular number
+      // We'll stick to full number with commas for now unless user wants strict 'M' formatting
+      const price = listing.price 
+        ? (listing.price >= 1000000 
+            ? `${(listing.price / 1000000).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })}M` 
+            : listing.price.toLocaleString()) 
+        : '-';
+
+      // Row Style - Minimalist, white background, light border bottom
+      const rowStyle = "border-bottom: 1px solid #eeeeee;";
+      const cellStyle = "padding: 12px 8px; font-size: 13px; color: #000; vertical-align: middle;";
+
+      contentHtml += `
+        <tr style="${rowStyle}">
+          <td style="${cellStyle} text-align: left;">${idDisplay}</td>
+          <td style="${cellStyle} text-align: left;">${location}</td>
+          <td style="${cellStyle} text-align: center;">${dimensions}</td>
+          <td style="${cellStyle} text-align: center;">${rooms}</td>
+          <td style="${cellStyle} text-align: center;">${sqFt}</td>
+          <td style="${cellStyle} text-align: center;">${condition}</td>
+          <td style="${cellStyle} text-align: center;">${other}</td>
+          <td style="${cellStyle} text-align: center;">${notes}</td>
+          <td style="${cellStyle} text-align: right; font-weight: bold;">${price}</td>
         </tr>
       `;
-    })
-    .join("");
+    });
+    
+    // Spacer between groups
+    contentHtml += `<tr><td colspan="9" style="height: 40px;"></td></tr>`;
+  }
 
   return `
     <!DOCTYPE html>
@@ -168,33 +234,22 @@ function generateListingsTableHtml(listings: ListingWithRelations[], title: stri
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${title}</title>
       </head>
-      <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #ffffff;">
-        <div style="width: 100%; max-width: 1000px; margin: 0 auto;">
-          <h2 style="${titleStyle}">${title}</h2>
+      <body style="font-family: Arial, sans-serif; line-height: 1.4; color: #000000; margin: 0; padding: 20px; background-color: #ffffff;">
+        <div style="width: 100%; max-width: 1200px; margin: 0 auto;">
           
-          <table width="100%" cellpadding="0" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #cccccc; min-width: 800px;">
-            <thead>
-              <tr bgcolor="#f0f0f0">
-                <th style="${headerStyle} width: 60px;">#</th>
-                <th style="${headerStyle} text-align: left;">Location</th>
-                <th style="${headerStyle}">Dimensions</th>
-                <th style="${headerStyle}">Rooms</th>
-                <th style="${headerStyle}">Sq. Ft.</th>
-                <th style="${headerStyle} text-align: left;">Condition</th>
-                <th style="${headerStyle} text-align: left;">Type</th>
-                <th style="${headerStyle} text-align: left;">Notes</th>
-                <th style="${headerStyle}">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
+          <div style="text-align: center; margin-bottom: 30px;">
+             <p style="margin: 0; font-size: 14px;">please review,</p>
+             <p style="margin: 0; font-size: 14px;">Feel free to call for more details.</p>
+             <p style="margin: 0; font-size: 14px;">please reply listing number for more details</p>
+             <br/>
+             <p style="margin: 0; font-weight: bold;">Thanks,</p>
+             <p style="margin: 0; font-weight: bold;">Eretz Realty</p>
+          </div>
+
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%;">
+            ${contentHtml}
           </table>
           
-          <div style="margin-top: 30px; font-size: 12px; color: #666666; text-align: center; border-top: 1px solid #eeeeee; padding-top: 20px;">
-            <p style="margin: 0; font-weight: bold;">Eretz Realty</p>
-            <p style="margin: 5px 0 0 0;">This is an automated property update.</p>
-          </div>
         </div>
       </body>
     </html>
