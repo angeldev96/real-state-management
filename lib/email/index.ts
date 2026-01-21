@@ -121,13 +121,9 @@ export function generatePropertyEmailHtml(
   return generateListingsGridHtml(listings, cycleName);
 }
 
-// Helper to group listings
+// Helper to group listings by property type
 function groupListingsByType(listings: ListingWithRelations[]) {
   const groups: Record<string, ListingWithRelations[]> = {};
-  
-  // Sort listings first to ensure consistent order (optional, but good)
-  // We can sort by ID or price if needed. For now, rely on input order.
-  
   listings.forEach(listing => {
     const typeName = listing.propertyType?.name || "Other";
     if (!groups[typeName]) {
@@ -135,81 +131,72 @@ function groupListingsByType(listings: ListingWithRelations[]) {
     }
     groups[typeName].push(listing);
   });
-  
   return groups;
 }
 
-// New Generator ensuring Black & White minimalist design
+// Modern email table with zebra stripes AND type grouping headers
 function generateListingsGridHtml(listings: ListingWithRelations[], title: string): string {
   const groups = groupListingsByType(listings);
-  const sortedTypes = Object.keys(groups).sort(); // Alphabetical sort of types
-  
-  let contentHtml = "";
+  const sortedTypes = Object.keys(groups).sort();
+
+  // Header styles - gray background
+  const headerCellStyle = "padding: 10px 12px; font-weight: 600; font-size: 13px; color: #555; background-color: #f0f0f0; border-bottom: 2px solid #ddd;";
 
   const tableHeader = `
-    <tr style="border-bottom: 2px solid #ccc;">
-      <th style="padding: 10px; text-align: left; font-weight: bold; width: 60px;">#</th>
-      <th style="padding: 10px; text-align: left; font-weight: bold;">Location</th>
-      <th style="padding: 10px; text-align: center; font-weight: bold;">Dimensions</th>
-      <th style="padding: 10px; text-align: center; font-weight: bold;">Rooms</th>
-      <th style="padding: 10px; text-align: center; font-weight: bold;">Square footage</th>
-      <th style="padding: 10px; text-align: center; font-weight: bold;">Condition</th>
-      <th style="padding: 10px; text-align: center; font-weight: bold;">Other</th>
-      <th style="padding: 10px; text-align: center; font-weight: bold;">Notes</th>
-      <th style="padding: 10px; text-align: right; font-weight: bold;">Price</th>
+    <tr>
+      <th style="${headerCellStyle} text-align: center; width: 80px;">#</th>
+      <th style="${headerCellStyle} text-align: left;">Location</th>
+      <th style="${headerCellStyle} text-align: center;">Dimensions</th>
+      <th style="${headerCellStyle} text-align: center; width: 65px;">Rooms</th>
+      <th style="${headerCellStyle} text-align: center;">Square footage</th>
+      <th style="${headerCellStyle} text-align: center;">Condition</th>
+      <th style="${headerCellStyle} text-align: center;">Other</th>
+      <th style="${headerCellStyle} text-align: center; width: 70px;">Notes</th>
+      <th style="${headerCellStyle} text-align: right; width: 90px;">Price</th>
     </tr>
   `;
 
+  let tablesHtml = "";
+
   for (const type of sortedTypes) {
     const typeListings = groups[type];
-    
-    // Group Header
-    contentHtml += `
-      <tr>
-        <td colspan="9" style="padding: 20px 0 10px 0; text-align: center; font-family: 'Times New Roman', serif; font-size: 24px; font-weight: bold; border-bottom: 1px solid #777;">
-          ${type}
-        </td>
-      </tr>
-      ${tableHeader}
-    `;
+    let rowsHtml = "";
 
-    // Rows
     typeListings.forEach((listing, index) => {
-      // Logic for "New" label
-      const isNew = listing.onMarket; // Using onMarket as proxy for 'Active/New' marketing status
-      const idDisplay = isNew ? `<strong>New ${listing.id}</strong>` : `${listing.id}`;
-      
-      // Formatting values
+      // "New" label in green
+      const isNew = listing.onMarket;
+      const idDisplay = isNew
+        ? `<span style="color: #2E7D32; font-weight: bold;">New</span> ${listing.id}`
+        : `${listing.id}`;
+
       const location = listing.locationDescription || listing.address || '-';
       const dimensions = listing.dimensions || '-';
       const rooms = listing.rooms || '-';
       const sqFt = listing.squareFootage ? listing.squareFootage.toLocaleString() : '-';
       const condition = listing.condition?.name || '-';
-      
-      // MAPPING: Other -> Features
-      const other = listing.features && listing.features.length > 0 
-        ? listing.features.map(f => f.name).join(", ") 
+
+      // Other -> Features
+      const other = listing.features && listing.features.length > 0
+        ? listing.features.map(f => f.name).join(", ")
         : '-';
-      
-      // MAPPING: Notes -> Zoning
+
+      // Notes -> Zoning
       const notes = listing.zoning?.code || '-';
-      
-      // MAPPING: Price
-      // Format: 3.2M or 2.750M or regular number
-      // We'll stick to full number with commas for now unless user wants strict 'M' formatting
-      const price = listing.price 
-        ? (listing.price >= 1000000 
-            ? `${(listing.price / 1000000).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })}M` 
-            : listing.price.toLocaleString()) 
+
+      // Price: millions format (2.7M)
+      const price = listing.price
+        ? (listing.price >= 1000000
+            ? `${(listing.price / 1000000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}M`
+            : listing.price.toLocaleString())
         : '-';
 
-      // Row Style - Minimalist, white background, light border bottom
-      const rowStyle = "border-bottom: 1px solid #eeeeee;";
-      const cellStyle = "padding: 12px 8px; font-size: 13px; color: #000; vertical-align: middle;";
+      // Zebra stripes - alternate row colors
+      const rowBg = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
+      const cellStyle = `padding: 10px 12px; font-size: 13px; color: #333; vertical-align: middle; background-color: ${rowBg}; border-bottom: 1px solid #eee;`;
 
-      contentHtml += `
-        <tr style="${rowStyle}">
-          <td style="${cellStyle} text-align: left;">${idDisplay}</td>
+      rowsHtml += `
+        <tr>
+          <td style="${cellStyle} text-align: center;">${idDisplay}</td>
           <td style="${cellStyle} text-align: left;">${location}</td>
           <td style="${cellStyle} text-align: center;">${dimensions}</td>
           <td style="${cellStyle} text-align: center;">${rooms}</td>
@@ -221,9 +208,16 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
         </tr>
       `;
     });
-    
-    // Spacer between groups
-    contentHtml += `<tr><td colspan="9" style="height: 40px;"></td></tr>`;
+
+    // Type section with header
+    tablesHtml += `
+      <!-- ${type} Section -->
+      <h2 style="text-align: center; font-size: 24px; font-weight: bold; color: #333; margin: 40px 0 20px 0;">${type}</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%;">
+        ${tableHeader}
+        ${rowsHtml}
+      </table>
+    `;
   }
 
   return `
@@ -236,20 +230,22 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.4; color: #000000; margin: 0; padding: 20px; background-color: #ffffff;">
         <div style="width: 100%; max-width: 1200px; margin: 0 auto;">
-          
-          <div style="text-align: center; margin-bottom: 30px;">
-             <p style="margin: 0; font-size: 14px;">please review,</p>
-             <p style="margin: 0; font-size: 14px;">Feel free to call for more details.</p>
-             <p style="margin: 0; font-size: 14px;">please reply listing number for more details</p>
-             <br/>
-             <p style="margin: 0; font-weight: bold;">Thanks,</p>
-             <p style="margin: 0; font-weight: bold;">Eretz Realty</p>
+
+          <!-- Title -->
+          <h1 style="text-align: center; font-size: 28px; font-weight: bold; color: #2E7D32; margin-bottom: 20px;">${title}</h1>
+
+          <!-- Tables by type -->
+          ${tablesHtml}
+
+          <!-- Footer -->
+          <div style="text-align: center; margin-top: 50px; padding: 20px;">
+            <p style="margin: 0 0 8px 0; font-size: 15px;">
+              <span style="color: #2E7D32; font-weight: bold; font-style: italic;">Eretz</span>
+              <span style="color: #333; font-weight: normal;"> Realty</span>
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #888;">This is an automated property update.</p>
           </div>
 
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%;">
-            ${contentHtml}
-          </table>
-          
         </div>
       </body>
     </html>
