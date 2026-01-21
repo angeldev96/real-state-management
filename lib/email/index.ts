@@ -194,9 +194,12 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
       const rowBg = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
       const cellStyle = `padding: 10px 12px; font-size: 13px; color: #333; vertical-align: middle; background-color: ${rowBg}; border-bottom: 1px solid #eee;`;
 
+      // Unique row ID to prevent Gmail from collapsing rows
+      const rowId = `listing-${listing.id}-${index}-${type.replace(/\s/g, '')}`;
+
       rowsHtml += `
-        <tr>
-          <td style="${cellStyle} text-align: center;">${idDisplay}</td>
+        <tr data-row-id="${rowId}">
+          <td style="${cellStyle} text-align: center;"><!-- ${listing.id} -->${idDisplay}</td>
           <td style="${cellStyle} text-align: left;">${location}</td>
           <td style="${cellStyle} text-align: center;">${dimensions}</td>
           <td style="${cellStyle} text-align: center;">${rooms}</td>
