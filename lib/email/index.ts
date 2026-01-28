@@ -139,8 +139,8 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
   const groups = groupListingsByType(listings);
   const sortedTypes = Object.keys(groups).sort();
 
-  // Header styles - gray background
-  const headerCellStyle = "padding: 10px 12px; font-weight: 600; font-size: 13px; color: #555; background-color: #f0f0f0; border-bottom: 2px solid #ddd;";
+  // Header styles - elegant, bold typography
+  const headerCellStyle = "padding: 12px 14px; font-weight: 700; font-size: 13px; color: #2c2c2c; background-color: #f0f0f0; border-bottom: 2px solid #ddd; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Georgia', 'Times New Roman', serif;";
 
   const tableHeader = `
     <tr>
@@ -215,7 +215,7 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
     // Type section with header
     tablesHtml += `
       <!-- ${type} Section -->
-      <h2 style="text-align: center; font-size: 24px; font-weight: bold; color: #333; margin: 40px 0 20px 0;">${type}</h2>
+      <h2 style="text-align: center; font-size: 24px; font-weight: 700; color: #2c2c2c; margin: 40px 0 20px 0; font-family: 'Georgia', 'Times New Roman', serif; letter-spacing: 0.5px;">${type}</h2>
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%;">
         ${tableHeader}
         ${rowsHtml}
@@ -235,7 +235,7 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
         <div style="width: 100%; max-width: 1200px; margin: 0 auto;">
 
           <!-- Title -->
-          <h1 style="text-align: center; font-size: 28px; font-weight: bold; color: #2E7D32; margin-bottom: 20px;">${title}</h1>
+          <h1 style="text-align: center; font-size: 28px; font-weight: 700; color: #2E7D32; margin-bottom: 20px; font-family: 'Georgia', 'Times New Roman', serif; letter-spacing: 0.5px;">${title}</h1>
 
           <!-- Tables by type -->
           ${tablesHtml}
