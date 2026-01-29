@@ -1,7 +1,7 @@
 import { db } from "./index";
-import { listings, propertyTypes, conditions, zonings, features, listingFeatures, cycleSchedules, emailRecipients, cycleRotationConfig, cycleRotationState, cycleRuns } from "./schema";
+import { listings, propertyTypes, conditions, zonings, features, listingFeatures, cycleSchedules, emailRecipients, emailSettings, cycleRotationConfig, cycleRotationState, cycleRuns } from "./schema";
 import { eq, and, inArray } from "drizzle-orm";
-import type { NewEmailRecipient, EmailRecipient, CycleRotationConfig, CycleRotationState, NewCycleRotationConfig, NewCycleRun } from "./schema";
+import type { NewEmailRecipient, EmailRecipient, EmailSettings, NewEmailSettings, CycleRotationConfig, CycleRotationState, NewCycleRotationConfig, NewCycleRun } from "./schema";
 import { DateTime } from "luxon";
 
 // Types for our enriched data - matches the original ListingWithRelations type
@@ -592,4 +592,51 @@ export async function toggleEmailRecipientActive(id: number): Promise<EmailRecip
 // Delete email recipient
 export async function deleteEmailRecipient(id: number): Promise<void> {
   await db.delete(emailRecipients).where(eq(emailRecipients.id, id));
+}
+
+// =============================================================================
+// EMAIL SETTINGS QUERIES
+// =============================================================================
+
+const DEFAULT_EMAIL_SETTINGS: Omit<EmailSettings, "id" | "createdAt" | "updatedAt"> = {
+  introText: "please review,\nFeel free to call for more details.\nplease reply listing number for more details\n\nThanks,\nDuvid Rubin",
+  agentTitle: "Licensed Real Estate Agent",
+  agentName: "David Rubin",
+  companyName: "Eretz realty",
+  agentAddress: "5916 18th Ave",
+  agentCityStateZip: "Brooklyn, N.Y. 11204",
+  agentPhone1: "C-917.930.2028",
+  agentPhone2: "718.256.9595 X 209",
+  agentEmail: "drubin@eretzltd.com",
+  legalDisclaimer: "IMPORTANT NOTICE: This message and any attachments are solely for the intended recipient and may contain confidential information which is, or may be, legally privileged or otherwise protected by law from further disclosure. If you are not the intended recipient, any disclosure, copying, use, or distribution of the information included in this e-mail and any attachments is prohibited. If you have received this communication in error, please notify the sender by reply e-mail and immediately and permanently delete this e-mail and any attachments.",
+};
+
+// Get email settings (creates default if not exists)
+export async function getOrCreateEmailSettings(): Promise<EmailSettings> {
+  const [existing] = await db.select().from(emailSettings).limit(1);
+  if (existing) return existing;
+
+  const [created] = await db
+    .insert(emailSettings)
+    .values({
+      id: 1,
+      ...DEFAULT_EMAIL_SETTINGS,
+    })
+    .returning();
+  return created;
+}
+
+// Update email settings
+export async function updateEmailSettings(data: Partial<NewEmailSettings>): Promise<EmailSettings> {
+  const existing = await getOrCreateEmailSettings();
+
+  const [updated] = await db
+    .update(emailSettings)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(emailSettings.id, existing.id))
+    .returning();
+  return updated;
 }

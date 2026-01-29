@@ -1,5 +1,6 @@
 import { Resend } from "resend";
-import { ListingWithRelations } from "@/lib/db/queries";
+import { ListingWithRelations, getOrCreateEmailSettings } from "@/lib/db/queries";
+import type { EmailSettings } from "@/lib/db/schema";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -80,7 +81,8 @@ export async function sendTestEmail(to: string) {
 
 
 export async function sendSamplePropertiesEmail(to: string, listings: ListingWithRelations[]) {
-  const html = generateSamplePropertiesEmailHtml(listings);
+  const emailSettings = await getOrCreateEmailSettings();
+  const html = await generateSamplePropertiesEmailHtml(listings, emailSettings);
 
   return sendEmail({
     to,
@@ -90,8 +92,8 @@ export async function sendSamplePropertiesEmail(to: string, listings: ListingWit
 }
 
 
-function generateSamplePropertiesEmailHtml(listings: ListingWithRelations[]): string {
-  return generateListingsGridHtml(listings, "Featured Properties");
+async function generateSamplePropertiesEmailHtml(listings: ListingWithRelations[], emailSettings: EmailSettings): Promise<string> {
+  return generateListingsGridHtml(listings, "Featured Properties", emailSettings);
 }
 
 export interface PropertyEmailOptions {
@@ -104,7 +106,8 @@ export async function sendPropertyEmail(
   to: string | string[],
   { cycleNumber, listings, cycleName }: PropertyEmailOptions
 ) {
-  const html = generatePropertyEmailHtml(cycleNumber, listings, cycleName);
+  const emailSettings = await getOrCreateEmailSettings();
+  const html = generateListingsGridHtml(listings, cycleName, emailSettings);
 
   return sendEmail({
     to,
@@ -113,12 +116,13 @@ export async function sendPropertyEmail(
   });
 }
 
-export function generatePropertyEmailHtml(
+export async function generatePropertyEmailHtml(
   cycleNumber: 1 | 2 | 3,
   listings: ListingWithRelations[],
   cycleName: string
-): string {
-  return generateListingsGridHtml(listings, cycleName);
+): Promise<string> {
+  const emailSettings = await getOrCreateEmailSettings();
+  return generateListingsGridHtml(listings, cycleName, emailSettings);
 }
 
 // Helper to group listings by property type
@@ -135,7 +139,7 @@ function groupListingsByType(listings: ListingWithRelations[]) {
 }
 
 // Modern email table with zebra stripes AND type grouping headers
-function generateListingsGridHtml(listings: ListingWithRelations[], title: string): string {
+function generateListingsGridHtml(listings: ListingWithRelations[], title: string, emailSettings: EmailSettings): string {
   const groups = groupListingsByType(listings);
   const sortedTypes = Object.keys(groups).sort();
 
@@ -223,6 +227,13 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
     `;
   }
 
+  // Convert intro text line breaks to HTML
+  const introHtml = emailSettings.introText
+    .split('\n')
+    .map(line => line.trim() === '' ? '<br>' : `<p style="margin: 0 0 5px 0;">${line}</p>`)
+    .join('');
+
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -234,19 +245,36 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
       <body style="font-family: Arial, sans-serif; line-height: 1.4; color: #000000; margin: 0; padding: 20px; background-color: #ffffff;">
         <div style="width: 100%; max-width: 1200px; margin: 0 auto;">
 
-          <!-- Title -->
-          <h1 style="text-align: center; font-size: 28px; font-weight: 700; color: #2E7D32; margin-bottom: 20px; font-family: 'Georgia', 'Times New Roman', serif; letter-spacing: 0.5px;">${title}</h1>
+          <!-- Introduction Text (Centered) -->
+          <div style="text-align: center; margin-bottom: 30px; font-size: 14px; color: #333;">
+            ${introHtml}
+          </div>
+
+          <!-- Separator Line -->
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
 
           <!-- Tables by type -->
           ${tablesHtml}
 
-          <!-- Footer -->
-          <div style="text-align: center; margin-top: 50px; padding: 20px;">
-            <p style="margin: 0 0 8px 0; font-size: 15px;">
-              <span style="color: #2E7D32; font-weight: bold; font-style: italic;">Eretz</span>
-              <span style="color: #333; font-weight: normal;"> Realty</span>
+          <!-- Footer - Agent Info (Left Aligned) -->
+          <div style="margin-top: 50px; padding: 20px 0; border-top: 1px solid #ddd;">
+            <div style="text-align: left; font-size: 14px; color: #333; font-style: italic;">
+              <p style="margin: 0 0 3px 0;">${emailSettings.agentTitle}</p>
+              <p style="margin: 0 0 3px 0;">${emailSettings.agentName}</p>
+              <p style="margin: 0 0 3px 0;">${emailSettings.companyName}</p>
+              <p style="margin: 0 0 3px 0;">${emailSettings.agentAddress}</p>
+              <p style="margin: 0 0 3px 0;">${emailSettings.agentCityStateZip}</p>
+              <p style="margin: 0 0 3px 0;">${emailSettings.agentPhone1}</p>
+              <p style="margin: 0 0 3px 0;">${emailSettings.agentPhone2}</p>
+              <p style="margin: 0;">${emailSettings.agentEmail}</p>
+            </div>
+          </div>
+
+          <!-- Legal Disclaimer (Red Text) -->
+          <div style="margin-top: 30px; padding: 15px; background-color: #f5f5f5; border-top: 3px solid #cc0000;">
+            <p style="margin: 0; font-size: 11px; color: #cc0000; line-height: 1.5;">
+              ${emailSettings.legalDisclaimer}
             </p>
-            <p style="margin: 0; font-size: 12px; color: #888;">This is an automated property update.</p>
           </div>
 
         </div>

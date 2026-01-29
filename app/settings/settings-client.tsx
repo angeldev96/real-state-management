@@ -19,6 +19,7 @@ import {
 } from "@/lib/actions";
 import type { CycleRotationConfig, CycleRotationState, PropertyType, Condition, Zoning, Feature } from "@/lib/db/schema";
 import { EmailRecipientsManager } from "@/components/settings/email-recipients-manager";
+import { EmailTemplateSettings } from "@/components/settings/email-template-settings";
 import { LookupManager } from "@/components/settings/lookup-manager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -180,6 +181,9 @@ export function SettingsClient({
           <TabsContent value="schedule" className="space-y-6 animate-in fade-in slide-in-from-left-2">
             {/* Email Recipients Manager */}
             <EmailRecipientsManager />
+
+            {/* Email Template Settings */}
+            <EmailTemplateSettings />
 
             {/* Test Email Card */}
             <Card className="border-primary/20 bg-primary/5">

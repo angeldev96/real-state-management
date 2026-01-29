@@ -99,6 +99,29 @@ export const cycleRuns = sqliteTable("cycle_runs", {
 });
 
 // =============================================================================
+// EMAIL SETTINGS (Email Template Configuration)
+// =============================================================================
+
+export const emailSettings = sqliteTable("email_settings", {
+  id: integer("id").primaryKey(),
+  // Header/Intro text (centered, appears before the listings)
+  introText: text("intro_text").notNull().default("please review,\nFeel free to call for more details.\nplease reply listing number for more details\n\nThanks,\nDuvid Rubin"),
+  // Footer agent info (left-aligned)
+  agentTitle: text("agent_title").notNull().default("Licensed Real Estate Agent"),
+  agentName: text("agent_name").notNull().default("David Rubin"),
+  companyName: text("company_name").notNull().default("Eretz realty"),
+  agentAddress: text("agent_address").notNull().default("5916 18th Ave"),
+  agentCityStateZip: text("agent_city_state_zip").notNull().default("Brooklyn, N.Y. 11204"),
+  agentPhone1: text("agent_phone_1").notNull().default("C-917.930.2028"),
+  agentPhone2: text("agent_phone_2").notNull().default("718.256.9595 X 209"),
+  agentEmail: text("agent_email").notNull().default("drubin@eretzltd.com"),
+  // Legal disclaimer (red text)
+  legalDisclaimer: text("legal_disclaimer").notNull().default("IMPORTANT NOTICE: This message and any attachments are solely for the intended recipient and may contain confidential information which is, or may be, legally privileged or otherwise protected by law from further disclosure. If you are not the intended recipient, any disclosure, copying, use, or distribution of the information included in this e-mail and any attachments is prohibited. If you have received this communication in error, please notify the sender by reply e-mail and immediately and permanently delete this e-mail and any attachments."),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+// =============================================================================
 // EMAIL RECIPIENTS (Email Distribution List)
 // =============================================================================
 
@@ -174,3 +197,5 @@ export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type EmailRecipient = typeof emailRecipients.$inferSelect;
 export type NewEmailRecipient = typeof emailRecipients.$inferInsert;
+export type EmailSettings = typeof emailSettings.$inferSelect;
+export type NewEmailSettings = typeof emailSettings.$inferInsert;

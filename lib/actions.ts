@@ -7,15 +7,15 @@ import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
 import { requireAuth } from "./auth/require-auth";
 import { sendTestEmail, sendSamplePropertiesEmail } from "./email";
-import { 
-  getAllListingsWithRelations, 
-  createEmailRecipient, 
-  getAllEmailRecipients, 
-  getEmailRecipientByEmail, 
-  updateEmailRecipient, 
-  deleteEmailRecipient, 
-  toggleEmailRecipientActive, 
-  upsertCycleRotationConfig, 
+import {
+  getAllListingsWithRelations,
+  createEmailRecipient,
+  getAllEmailRecipients,
+  getEmailRecipientByEmail,
+  updateEmailRecipient,
+  deleteEmailRecipient,
+  toggleEmailRecipientActive,
+  upsertCycleRotationConfig,
   recalculateCycleRotationState,
   createPropertyType,
   updatePropertyType,
@@ -32,8 +32,11 @@ import {
   createFeature,
   updateFeature,
   toggleFeature,
-  deleteFeature
+  deleteFeature,
+  getOrCreateEmailSettings,
+  updateEmailSettings
 } from "./db/queries";
+import type { EmailSettings } from "./db/schema";
 import { getSession } from "./auth/session";
 
 export type ActionResponse = {
@@ -599,5 +602,70 @@ export const updateFeatureAction = async (id: number, name: string) =>
 export const toggleFeatureAction = async (id: number) => 
   handleLookupAction(() => toggleFeature(id), "Feature status toggled", "Failed to toggle status");
 
-export const deleteFeatureAction = async (id: number) => 
+export const deleteFeatureAction = async (id: number) =>
   handleLookupAction(() => deleteFeature(id), "Feature deleted", "Failed to delete feature");
+
+// =============================================================================
+// EMAIL SETTINGS ACTIONS
+// =============================================================================
+
+export interface EmailSettingsFormData {
+  introText?: string;
+  agentTitle?: string;
+  agentName?: string;
+  companyName?: string;
+  agentAddress?: string;
+  agentCityStateZip?: string;
+  agentPhone1?: string;
+  agentPhone2?: string;
+  agentEmail?: string;
+  legalDisclaimer?: string;
+}
+
+export async function getEmailSettingsAction(): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    const settings = await getOrCreateEmailSettings();
+    return {
+      success: true,
+      message: "Email settings retrieved",
+      data: settings,
+    };
+  } catch (error) {
+    console.error("Error fetching email settings:", error);
+    return {
+      success: false,
+      message: "Failed to retrieve email settings",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function updateEmailSettingsAction(data: EmailSettingsFormData): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    const updated = await updateEmailSettings(data);
+    revalidatePath("/settings");
+
+    return {
+      success: true,
+      message: "Email settings updated successfully",
+      data: updated,
+    };
+  } catch (error) {
+    console.error("Error updating email settings:", error);
+    return {
+      success: false,
+      message: "Failed to update email settings",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

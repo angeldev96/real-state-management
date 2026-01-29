@@ -1,11 +1,12 @@
 import { requireAuth } from "@/lib/auth/require-auth";
-import { 
-  getOrCreateCycleRotationConfig, 
+import {
+  getOrCreateCycleRotationConfig,
   ensureCycleRotationState,
   getPropertyTypes,
   getConditions,
   getZonings,
-  getFeatures
+  getFeatures,
+  getOrCreateEmailSettings
 } from "@/lib/db/queries";
 import { SettingsClient } from "./settings-client";
 
