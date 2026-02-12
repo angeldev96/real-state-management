@@ -2,6 +2,8 @@ import { getAllListingsWithRelations, getPropertyTypes, getConditions, getZoning
 import { requireAuth } from "@/lib/auth/require-auth";
 import { ListingsPageClient } from "./listings-page-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function ListingsPage() {
   // Require authentication - redirects to /login if not authenticated
   await requireAuth();
