@@ -6,9 +6,12 @@ import { listings, listingFeatures } from "./db/schema";
 import { eq } from "drizzle-orm";
 import { ListingFormData } from "./types";
 import { requireAuth } from "./auth/require-auth";
-import { sendTestEmail, sendSamplePropertiesEmail } from "./email";
+import { sendTestEmail, sendSamplePropertiesEmail, sendBatchPropertyEmail } from "./email";
+import { getBatchRecipients, getAllRecipients, addRecipient, updateRecipient, deleteRecipient } from "./batch-emails";
+import type { BatchRecipient } from "./batch-emails";
 import {
   getAllListingsWithRelations,
+  getListingsByCycle,
   createEmailRecipient,
   getAllEmailRecipients,
   getEmailRecipientByEmail,
@@ -523,6 +526,146 @@ export async function deleteEmailRecipientAction(id: number): Promise<ActionResp
     };
   }
 }
+
+// =============================================================================
+// BATCH EMAIL ACTIONS
+// =============================================================================
+
+const CYCLE_NAMES: Record<number, string> = {
+  1: "Cycle 1",
+  2: "Cycle 2",
+  3: "Cycle 3",
+};
+
+export async function sendBatchEmailAction(
+  batchNumber: 1 | 2,
+  cycleNumber: 1 | 2 | 3
+): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, message: "Unauthorized" };
+    }
+
+    const recipients = getBatchRecipients(batchNumber);
+    if (recipients.length === 0) {
+      return { success: false, message: `No recipients found for Batch ${batchNumber}` };
+    }
+
+    const listings = await getListingsByCycle(cycleNumber);
+    if (listings.length === 0) {
+      return { success: false, message: `No listings found for Cycle ${cycleNumber}` };
+    }
+
+    const emails = recipients.map((r) => r.email);
+    const cycleName = CYCLE_NAMES[cycleNumber] ?? `Cycle ${cycleNumber}`;
+
+    const result = await sendBatchPropertyEmail(emails, {
+      cycleNumber,
+      listings,
+      cycleName,
+    });
+
+    if (result.success) {
+      return {
+        success: true,
+        message: `Batch ${batchNumber} sent successfully: ${result.sent} emails delivered`,
+        data: { sent: result.sent, failed: result.failed },
+      };
+    }
+
+    return {
+      success: false,
+      message: `Batch ${batchNumber} partially failed: ${result.sent} sent, ${result.failed} failed`,
+      data: { sent: result.sent, failed: result.failed },
+      error: result.errors.join("; "),
+    };
+  } catch (error) {
+    console.error("Error sending batch email:", error);
+    return {
+      success: false,
+      message: "Failed to send batch email",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getBatchEmailsAction(): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, message: "Unauthorized" };
+
+    const recipients = getAllRecipients();
+    return { success: true, message: "Emails retrieved", data: recipients };
+  } catch (error) {
+    console.error("Error getting batch emails:", error);
+    return { success: false, message: "Failed to get emails", error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
+export async function addBatchEmailAction(data: { email: string; name?: string }): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, message: "Unauthorized" };
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { success: false, message: "Invalid email format" };
+    }
+
+    const all = getAllRecipients();
+    if (all.some((r) => r.email.toLowerCase() === data.email.toLowerCase())) {
+      return { success: false, message: "This email already exists in the list" };
+    }
+
+    addRecipient({ email: data.email.toLowerCase().trim(), name: data.name?.trim() || undefined });
+    revalidatePath("/batch-send");
+    return { success: true, message: "Email added successfully" };
+  } catch (error) {
+    console.error("Error adding batch email:", error);
+    return { success: false, message: "Failed to add email", error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
+export async function updateBatchEmailAction(index: number, data: { email: string; name?: string }): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, message: "Unauthorized" };
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { success: false, message: "Invalid email format" };
+    }
+
+    const all = getAllRecipients();
+    const duplicate = all.findIndex((r, i) => i !== index && r.email.toLowerCase() === data.email.toLowerCase());
+    if (duplicate !== -1) {
+      return { success: false, message: "This email already exists in the list" };
+    }
+
+    updateRecipient(index, { email: data.email.toLowerCase().trim(), name: data.name?.trim() || undefined });
+    revalidatePath("/batch-send");
+    return { success: true, message: "Email updated successfully" };
+  } catch (error) {
+    console.error("Error updating batch email:", error);
+    return { success: false, message: "Failed to update email", error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
+export async function deleteBatchEmailAction(index: number): Promise<ActionResponse> {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, message: "Unauthorized" };
+
+    deleteRecipient(index);
+    revalidatePath("/batch-send");
+    return { success: true, message: "Email deleted successfully" };
+  } catch (error) {
+    console.error("Error deleting batch email:", error);
+    return { success: false, message: "Failed to delete email", error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
 // =============================================================================
 // CLASSIFICATION ACTIONS (Lookup Tables)
 // =============================================================================

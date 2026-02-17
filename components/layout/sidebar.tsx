@@ -12,6 +12,7 @@ import {
   LogOut,
   User,
   Users,
+  Send,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -37,6 +38,12 @@ const navigation = [
     href: "/listings",
     icon: Building2,
     description: "Manage properties",
+  },
+  {
+    name: "Batch Send",
+    href: "/batch-send",
+    icon: Send,
+    description: "Manual email batches",
   },
   {
     name: "Schedule",

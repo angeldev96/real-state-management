@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { ListingWithRelations, getOrCreateEmailSettings } from "@/lib/db/queries";
 import type { EmailSettings } from "@/lib/db/schema";
+import { RESEND_CHUNK_SIZE } from "@/lib/batch-emails";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -12,17 +13,24 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   text?: string;
+  bcc?: string | string[];
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, text, bcc }: SendEmailOptions) {
   try {
-    const { data, error } = await resend.emails.send({
+    const payload: Parameters<typeof resend.emails.send>[0] = {
       from: FROM_EMAIL,
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
       text,
-    });
+    };
+
+    if (bcc) {
+      payload.bcc = Array.isArray(bcc) ? bcc : [bcc];
+    }
+
+    const { data, error } = await resend.emails.send(payload);
 
     if (error) {
       console.error("Error sending email:", error);
@@ -281,4 +289,47 @@ function generateListingsGridHtml(listings: ListingWithRelations[], title: strin
       </body>
     </html>
   `;
+}
+
+// Send property email to a batch of recipients using BCC for privacy
+export async function sendBatchPropertyEmail(
+  bccRecipients: string[],
+  options: PropertyEmailOptions
+): Promise<{ success: boolean; sent: number; failed: number; errors: string[] }> {
+  const emailSettings = await getOrCreateEmailSettings();
+  const html = generateListingsGridHtml(options.listings, options.cycleName, emailSettings);
+  const subject = `Eretz Realty - ${options.cycleName} - ${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
+
+  // Split into chunks of RESEND_CHUNK_SIZE for Resend API limits
+  const chunks: string[][] = [];
+  for (let i = 0; i < bccRecipients.length; i += RESEND_CHUNK_SIZE) {
+    chunks.push(bccRecipients.slice(i, i + RESEND_CHUNK_SIZE));
+  }
+
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const chunk of chunks) {
+    const result = await sendEmail({
+      to: FROM_EMAIL,
+      subject,
+      html,
+      bcc: chunk,
+    });
+
+    if (result.success) {
+      sent += chunk.length;
+    } else {
+      failed += chunk.length;
+      errors.push(result.error ? String(result.error) : "Unknown error");
+    }
+
+    // Small delay between chunks to avoid rate limiting
+    if (chunks.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+
+  return { success: failed === 0, sent, failed, errors };
 }
