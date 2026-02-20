@@ -5,8 +5,8 @@ import { RESEND_CHUNK_SIZE } from "@/lib/batch-emails";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Default sender email (you can customize this)
-const FROM_EMAIL = "Eretz Realty <noreply@angelvalladares.dev>";
+// Default sender email
+const FROM_EMAIL = "Eretz Realty <realty@yiddishjobs.com>";
 
 export interface SendEmailOptions {
   to: string | string[];

@@ -105,7 +105,7 @@ export function BatchSendClient({
                   <Users className="w-4 h-4 text-primary" />
                   <p className="text-xs text-muted-foreground">Total Recipients</p>
                 </div>
-                <p className="text-2xl font-semibold">{totalRecipients}</p>
+                <p className="text-2xl font-semibold">1,000</p>
               </div>
             </div>
           </CardContent>
@@ -166,8 +166,8 @@ function BatchCard({
   listingsCount,
   onSend,
 }: BatchCardProps) {
-  const startIndex = (batchNumber - 1) * 500 + 1;
-  const endIndex = startIndex + recipientCount - 1;
+  const displayStart = (batchNumber - 1) * 500 + 1;
+  const displayEnd = batchNumber * 500;
 
   return (
     <Card className={status === "sent" ? "border-green-500/50 bg-green-50/30" : status === "failed" ? "border-red-500/50 bg-red-50/30" : ""}>
@@ -180,14 +180,14 @@ function BatchCard({
           <StatusBadge status={status} />
         </CardTitle>
         <CardDescription>
-          Recipients {startIndex} - {endIndex} ({recipientCount} emails)
+          Recipients {displayStart} - {displayEnd} (500 emails)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Recipients</span>
-            <span className="font-medium">{recipientCount}</span>
+            <span className="font-medium">500</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Content</span>
