@@ -6,7 +6,7 @@ export interface BatchRecipient {
   name?: string;
 }
 
-export const BATCH_SIZE = 2;
+export const BATCH_SIZE = 3;
 export const RESEND_CHUNK_SIZE = 50;
 
 const EMAILS_FILE_PATH = path.join(process.cwd(), "data", "emails.json");
